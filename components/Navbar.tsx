@@ -11,7 +11,11 @@ export default function Navbar() {
   const [radius, setRadius] = useState(180);
   const navRef = useRef<HTMLElement>(null);
 
+  const pathname = usePathname()
+
   useGSAP(() => {
+    if (pathname !== "/") return
+
     gsap.from(["button", "menu"], {
       opacity: 0,
       y: -8,
@@ -20,7 +24,8 @@ export default function Navbar() {
       stagger: 0.15,
       delay: 2.3
     })
-  }, { scope: navRef })
+  }, { scope: navRef, dependencies: [pathname] })
+
 
   useEffect(() => {
     const updateRadius = () => {
@@ -38,10 +43,10 @@ export default function Navbar() {
     { title: "contact", href: "/contact", angle: 315 },
   ];
 
-  const pathname = usePathname().includes("admin")
+  const adminpathname = usePathname().includes("admin")
 
   return (
-    <nav className={`${pathname ? "hidden" : ""}`} ref={navRef}>
+    <nav className={`${adminpathname ? "hidden" : ""}`} ref={navRef}>
       {/* Floating menu trigger - bottom right corner */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}

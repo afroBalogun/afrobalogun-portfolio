@@ -66,15 +66,15 @@ export default function Home() {
     <main className="min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-12 flex flex-col justify-between" ref={homeRef}>
 
       {/* Quotes */}
-      <div className="flex justify-between">
+      <div className="flex max-sm:flex-col justify-between max-sm:w-full mt-10">
         <div className="md:absolute md:top-1/5 max-sm:mt-5">
-          <p className="quote-text text-[10px] sm:text-xs font-extralight uppercase md:w-65 max-md:w-56">
+          <p className="quote-text text-[10px] lg:text-xs font-extralight uppercase md:w-65 max-md:w-56">
             "Put your name on everything you do."<br />
             <span className="font-semibold">— Mark Perrett</span>
           </p>
         </div>
-        <div className="mt-6 sm:mt-8 md:mt-0 md:absolute md:right-8 lg:right-20 md:bottom-1/3">
-          <p className="quote-text text-[10px] sm:text-xs font-extralight uppercase md:w-65 max-md:w-56 text-right">
+        <div className="mt-6 sm:mt-8 md:mt-0 md:absolute md:right-8 lg:right-20 md:bottom-1/3 max-sm:flex max-sm:justify-end">
+          <p className="quote-text text-[10px] lg:text-xs font-extralight uppercase md:w-65 max-md:w-56 text-right">
             "Every great design begins with an even better story."<br />
             <span className="font-semibold">— Lorinda Mamo</span>
           </p>
@@ -82,9 +82,9 @@ export default function Home() {
       </div>
 
       {/* Hero */}
-      <section className="w-full flex-1 flex flex-col justify-center max-md:items-center gap-5 sm:gap-8 relative">
+      <section className="w-full flex-1 flex flex-col justify-center max-md:items-center gap-5 lg:gap-8 relative">
 
-        <p id="topname" className="text-xs sm:text-sm font-light uppercase text-center">
+        <p id="topname" className="text-xs lg:text-sm font-light uppercase text-center">
           <span className="font-semibold">Temiloluwa Obasa,</span> (he/him) <br />
           content writer, music enthusiast.
         </p>
@@ -93,9 +93,9 @@ export default function Home() {
 
           {/* Image 1 */}
           <article className="relative w-fit flex items-center justify-center">
-            <h4 className="z-10 absolute top-0 text-xs left-2 font-semibold" ref={lbl1Ref} style={{ whiteSpace: "pre" }} />
+            <h4 className="z-10 absolute top-0 text-xs left-2 max-sm:left-4 max-sm:top-3 font-semibold" ref={lbl1Ref} style={{ whiteSpace: "pre" }} />
             <div className="relative overflow-hidden">
-              <img src="neko.png" alt="cat" className="pointer-events-none scale-90" />
+              <img src="neko.png" alt="cat" className="pointer-events-none scale-90 max-sm:scale-80" />
               {/* Brush mask — covers image, animates to scaleX(0) */}
               <div
                 ref={mask1Ref}
@@ -106,10 +106,10 @@ export default function Home() {
           </article>
 
           {/* Image 2 */}
-          <article className="relative w-fit flex items-center justify-center pt-1">
-            <h4 className="z-10 absolute bottom-3 text-xs right-3 font-semibold text-[#C1C1C1]" ref={lbl2Ref} />
+          <article className="relative w-fit flex items-center justify-center pt-2 sm:pt-1">
+            <h4 className="z-10 absolute bottom-3 text-xs right-3 max-sm:right-4 max-sm:bottom-4 font-semibold text-[#C1C1C1]" ref={lbl2Ref} />
             <div className="relative overflow-hidden">
-              <img src="balo.png" alt="afrobalogun silhouette" className="pointer-events-none scale-90" />
+              <img src="balo.png" alt="afrobalogun silhouette" className="pointer-events-none scale-90 max-sm:scale-80" />
               <div
                 ref={mask2Ref}
                 className="absolute inset-0 bg-white dark:bg-black"
@@ -120,7 +120,7 @@ export default function Home() {
 
         </div>
 
-        <p id="botname" className="text-xs sm:text-sm font-light uppercase text-center">
+        <p id="botname" className="text-xs lg:text-sm font-light uppercase text-center">
           <span className="font-semibold">afroBalogun</span>, creative developer and <br />
           full-stack engineer.
         </p>

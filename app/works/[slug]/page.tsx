@@ -140,6 +140,18 @@ export default function Work() {
             {project.body.map((para, i) => (
               <p key={i} className="body-text text-xs text-secondary/50 leading-relaxed">{para}</p>
             ))}
+
+            {project.link && (
+              <Link
+                href={project.link}
+                target="_blank"
+                className="md:hidden panel-item flex items-center gap-1.5 text-xs font-semibold uppercase underline underline-offset-4 hover:opacity-50 transition-opacity w-fit"
+                style={{ opacity: 0 }}
+              >
+                visit
+                <GoArrowDownRight className="text-base" />
+              </Link>
+            )}
           </div>
         )}
 

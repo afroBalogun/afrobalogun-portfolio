@@ -165,189 +165,57 @@ export default function About() {
   const treeMaskRef = useRef<HTMLDivElement>(null)
 
   useGSAP(() => {
+    const mm = gsap.matchMedia();
 
-    // Background paragraph — line reveal
-    if (backgroundRef.current) {
-      const split = new SplitText(backgroundRef.current, { type: "lines" })
-      gsap.from(split.lines, {
-        opacity: 0,
-        y: 28,
-        duration: 1,
-        ease: "power3.out",
-        stagger: 0.12,
-        scrollTrigger: { trigger: backgroundRef.current, start: "top 80%" },
-      })
-    }
+    // ——————————————————————————————————————————————————
+    // — ALL DEVICES: Core Reveals & Layout Animations  —
+    // ——————————————————————————————————————————————————
 
-    // Steve image brush reveal
+    // Mask Reveals
     gsap.to(mask1Ref.current, {
       scaleX: 0,
       duration: 1.1,
       ease: "power4.inOut",
       transformOrigin: "right center",
       scrollTrigger: { trigger: mask1Ref.current, start: "top 80%" },
-    })
+    });
 
-    // "shaping ideas..." char stagger
-    const shape = new SplitText(".shape", { type: "chars" })
-    gsap.from(shape.chars, {
-      opacity: 0,
-      y: 2,
-      duration: 0.1,
-      ease: "power3.out",
-      stagger: 0.05,
-      scrollTrigger: { trigger: backgroundRef.current, start: "bottom center" },
-    })
-
-    // Film strip slides in from left
     gsap.from(filmRef.current, {
       x: "-100%",
       duration: 1.2,
       ease: "power4.out",
       scrollTrigger: { trigger: sectionRef.current, start: "25% 75%" },
-    })
+    });
 
-    // Me items — icon spin, header slide, words blur up
-    itemsRef.current?.querySelectorAll(".me-item").forEach((item, i) => {
-      const header = item.querySelector(".me-header")
-      const desc = item.querySelector(".me-desc")
-      const icon = item.querySelector(".me-icon")
+    // Stack Scroll Animation (Pinned)
+    const cols = gsap.utils.toArray<HTMLElement>(".stack-col");
+    gsap.set(cols, { opacity: 0.15, scale: 0.92 });
 
-      gsap.from(icon, {
-        rotate: -90,
-        opacity: 0,
-        duration: 0.5,
-        ease: "back.out(2)",
-        scrollTrigger: { trigger: item, start: "top 82%" },
-        delay: i * 0.08,
-      })
-
-      gsap.from(header, {
-        opacity: 0,
-        x: 24,
-        duration: 0.7,
-        ease: "power3.out",
-        scrollTrigger: { trigger: item, start: "top 82%" },
-        delay: i * 0.08,
-      })
-
-      if (desc) {
-        const split = new SplitText(desc, { type: "words" })
-        gsap.from(split.words, {
-          opacity: 0,
-          y: 10,
-          duration: 0.6,
-          ease: "power2.out",
-          stagger: 0.025,
-          scrollTrigger: { trigger: item, start: "top 80%" },
-          delay: 0.2 + i * 0.08,
-        })
-      }
-    })
-
-    // "about" — chars fly in from scattered directions
-    const aboutDirs = [
-      { x: -60, y: -40 }, { x: 0, y: -80 }, { x: 60, y: -40 },
-      { x: 80, y: 0 }, { x: 40, y: 60 },
-    ]
-    const about = new SplitText(".about", { type: "chars" })
-    gsap.from(about.chars, {
-      opacity: 0,
-      x: (i: number) => aboutDirs[i % aboutDirs.length].x,
-      y: (i: number) => aboutDirs[i % aboutDirs.length].y,
-      rotate: (i: number) => (i % 2 === 0 ? -18 : 18),
-      duration: 1,
-      ease: "back.out(1.4)",
-      stagger: 0.08,
-      scrollTrigger: { trigger: ".about", start: "top 85%" },
-    })
-
-    // Expertise article — curtain wipe + parallax
-    const article = expertiseRef.current!.querySelector("article")
-    gsap.from(article, {
-      clipPath: "inset(100% 0% 0% 0%)",
-      duration: 1.4,
-      ease: "power4.inOut",
-      scrollTrigger: { trigger: expertiseRef.current, start: "top 80%" },
-    })
-    gsap.to(article, {
-      y: 0,
-      ease: "none",
+    gsap.timeline({
       scrollTrigger: {
-        trigger: article,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: 1.5,
+        trigger: stackRef.current,
+        start: "top top",
+        end: "+=500",
+        pin: true,
+        scrub: 0.3,
+        onUpdate: (self) => {
+          const p = self.progress;
+          if (p < 0.02) setActiveStackCol(null);
+          else if (p < 0.38) setActiveStackCol(0);
+          else if (p < 0.65) setActiveStackCol(1);
+          else setActiveStackCol(2);
+        },
+        onLeaveBack: () => setActiveStackCol(null),
+        onLeave: () => setActiveStackCol(null),
       },
     })
+      .to(cols[0], { opacity: 1, scale: 1, duration: 0.4 })
+      .to(cols[0], { opacity: 0.15, scale: 0.92, duration: 0.4 })
+      .to(cols[1], { opacity: 1, scale: 1, duration: 0.4 }, "<")
+      .to(cols[1], { opacity: 0.15, scale: 0.92, duration: 0.4 })
+      .to(cols[2], { opacity: 1, scale: 1, duration: 0.4 }, "<");
 
-    // Expertise cards — title up, line draws, words blur in
-    cardsRef.current?.querySelectorAll(".card").forEach((card, i) => {
-      const title = card.querySelector("h6")
-      const line = card.querySelector(".expertise-line")
-      const desc = card.querySelector("p")
-
-      const tl = gsap.timeline({
-        scrollTrigger: { trigger: card, start: "top 85%" },
-        delay: i * 0.15,
-      })
-
-      tl.from(title, { opacity: 0, y: 16, duration: 0.6, ease: "power3.out" })
-
-      if (desc) {
-        const split = new SplitText(desc, { type: "words" })
-        tl.from(split.words, {
-          opacity: 0,
-          y: 8,
-          filter: "blur(4px)",
-          duration: 0.5,
-          ease: "power2.out",
-          stagger: 0.02,
-        }, "-=0.1")
-      }
-    })
-
-    // "stack" heading chars
-    const stack = new SplitText(".stack", { type: "chars" })
-    gsap.from(stack.chars, {
-      opacity: 0,
-      y: 2,
-      duration: 0.5,
-      ease: "power3.out",
-      stagger: 0.05,
-      scrollTrigger: { trigger: stackRef.current, start: "center 80%" },
-    })
-
-    // Stack — pin section, scrub opacity col by col
-    // Page stays locked until all three columns have been revealed
-    const cols = gsap.utils.toArray<HTMLElement>(".stack-col")
-
-gsap.set(cols, { opacity: 0.15, scale: 0.92 })
-
-gsap.timeline({
-  scrollTrigger: {
-    trigger: stackRef.current,
-    start: "top top",
-    end: "+=500",        // shorter scroll distance = faster
-    pin: true,
-    scrub: 0.3,          // tighter scrub = snappier
-    onUpdate: (self) => {
-      const p = self.progress
-      if (p < 0.02)      setActiveStackCol(null)
-      else if (p < 0.38) setActiveStackCol(0)
-      else if (p < 0.65) setActiveStackCol(1)
-      else               setActiveStackCol(2)
-    },
-    onLeaveBack: () => setActiveStackCol(null),
-    onLeave:     () => setActiveStackCol(null),
-  },
-})
-  .to(cols[0], { opacity: 1, scale: 1, duration: 0.4 })
-  .to(cols[0], { opacity: 0.15, scale: 0.92, duration: 0.4 })
-  .to(cols[1], { opacity: 1, scale: 1, duration: 0.4 }, "<")
-  .to(cols[1], { opacity: 0.15, scale: 0.92, duration: 0.4 })
-  .to(cols[2], { opacity: 1, scale: 1, duration: 0.4 }, "<")
-    // Hobbies articles fade up
+    // Hobbies Reveal
     gsap.from(
       hobbiesRef.current!.querySelectorAll("article:not(:last-child)"),
       {
@@ -358,99 +226,196 @@ gsap.timeline({
         stagger: 0.15,
         scrollTrigger: { trigger: hobbiesRef.current, start: "top 80%" },
       }
-    )
+    );
 
     const stl = gsap.timeline({
-      scrollTrigger: {
-        trigger: hobbiesRef.current,
-        start: "top 80%",
-      },
-    })
-
+      scrollTrigger: { trigger: hobbiesRef.current, start: "top 80%" },
+    });
     stl.to([h1Ref.current, h2Ref.current, h3Ref.current], {
       scaleX: 0,
       duration: 1.1,
       ease: "power4.inOut",
       transformOrigin: "right center",
-    })
+    });
+    stl.from(".music", { opacity: 0, duration: 0.5, y: 20, ease: "power3.out" }, "<");
+    stl.from(".reading", { opacity: 0, duration: 0.5, y: -20, ease: "power3.out" }, "<");
+    stl.from(".anime", { opacity: 0, duration: 0.5, y: 20, ease: "power3.out" }, "<");
 
-    stl.from(".music", {
-      opacity: 0,
-      duration: 0.5,
-      y: 20,
-      ease: "power3.out",
-    }, "<") // "<" = same time as previous, adjust as needed
-
-    stl.from(".reading", {
-      opacity: 0,
-      duration: 0.5,
-      y: -20,
-      ease: "power3.out",
-    }, "<")
-
-    stl.from(".anime", {
-      opacity: 0,
-      duration: 0.5,
-      y: 20,
-      ease: "power3.out",
-    }, "<")
-
-    const ttl = gsap.timeline({
-      scrollTrigger: {
-        trigger: ".name",
-        start: "top 80%",
-      },
-    })
-
-    ttl.from(".name h4", {
-      opacity: 0,
-      duration: 0.5,
-      ease: "power3.out",
-      stagger: 0.1,
-    })
-
-    const name = new SplitText(".name h6", { type: "chars" })
-    ttl.from(name.chars, {
-      opacity: 0,
-      y: 2,
-      duration: 0.5,
-      ease: "power3.out",
-      stagger: 0.05,
-    })
-
+    // Footer Tree Mask
     const ftl = gsap.timeline({
-      scrollTrigger: {
-        trigger: footerRef.current,
-        start: "top 80%",
-      },
-    })
-    const p = new SplitText(".footer p", { type: "chars" })
-    const h4 = new SplitText(".footer h4", { type: "words" })
-
-    ftl.from(p.chars, {
-      opacity: 0,
-      y: 10,
-      duration: 0.5,
-      ease: "power3.out",
-      stagger: 0.02,
-    })
-
-    ftl.from(h4.words, {
-      opacity: 0,
-      y: 10,
-      duration: 0.5,
-      ease: "power3.out",
-      stagger: 0.3,
-      delay: 0.3,
-    }, "-=0.3")
-
+      scrollTrigger: { trigger: footerRef.current, start: "top 80%" },
+    });
     ftl.to(treeMaskRef.current, {
       scaleY: 0,
       duration: 1.5,
       ease: "power4.out",
       transformOrigin: "right top",
-    })
-  }, { scope: aboutRef })
+    });
+
+    // ——————————————————————————————————————————————————
+    // — DESKTOP ONLY: SplitText & Heavy Effects        —
+    // ——————————————————————————————————————————————————
+    mm.add("(min-width: 768px)", () => {
+
+      // Background SplitText
+      if (backgroundRef.current) {
+        const split = new SplitText(backgroundRef.current, { type: "lines" });
+        gsap.from(split.lines, {
+          opacity: 0,
+          y: 28,
+          duration: 1,
+          ease: "power3.out",
+          stagger: 0.12,
+          scrollTrigger: { trigger: backgroundRef.current, start: "top 80%" },
+        });
+      }
+
+      // Shape/Stack SplitText
+      const shape = new SplitText(".shape", { type: "chars" });
+      gsap.from(shape.chars, {
+        opacity: 0,
+        y: 2,
+        duration: 0.1,
+        ease: "power3.out",
+        stagger: 0.05,
+        scrollTrigger: { trigger: backgroundRef.current, start: "bottom center" },
+      });
+
+      const stack = new SplitText(".stack", { type: "chars" });
+      gsap.from(stack.chars, {
+        opacity: 0,
+        y: 2,
+        duration: 0.5,
+        ease: "power3.out",
+        stagger: 0.05,
+        scrollTrigger: { trigger: stackRef.current, start: "center 80%" },
+      });
+
+      // Me-Items Staggered Loop
+      itemsRef.current?.querySelectorAll(".me-item").forEach((item, i) => {
+        const header = item.querySelector(".me-header");
+        const desc = item.querySelector(".me-desc");
+        const icon = item.querySelector(".me-icon");
+
+        gsap.from(icon, {
+          rotate: -90,
+          opacity: 0,
+          duration: 0.5,
+          ease: "back.out(2)",
+          scrollTrigger: { trigger: item, start: "top 82%" },
+          delay: i * 0.08,
+        });
+        gsap.from(header, {
+          opacity: 0,
+          x: 24,
+          duration: 0.7,
+          ease: "power3.out",
+          scrollTrigger: { trigger: item, start: "top 82%" },
+          delay: i * 0.08,
+        });
+        if (desc) {
+          const split = new SplitText(desc, { type: "words" });
+          gsap.from(split.words, {
+            opacity: 0,
+            y: 10,
+            duration: 0.6,
+            ease: "power2.out",
+            stagger: 0.025,
+            scrollTrigger: { trigger: item, start: "top 80%" },
+            delay: 0.2 + i * 0.08,
+          });
+        }
+      });
+
+      // About Character Scatter
+      const aboutDirs = [
+        { x: -60, y: -40 }, { x: 0, y: -80 }, { x: 60, y: -40 },
+        { x: 80, y: 0 }, { x: 40, y: 60 },
+      ];
+      const about = new SplitText(".about", { type: "chars" });
+      gsap.from(about.chars, {
+        opacity: 0,
+        x: (i: number) => aboutDirs[i % aboutDirs.length].x,
+        y: (i: number) => aboutDirs[i % aboutDirs.length].y,
+        rotate: (i: number) => (i % 2 === 0 ? -18 : 18),
+        duration: 1,
+        ease: "back.out(1.4)",
+        stagger: 0.08,
+        scrollTrigger: { trigger: ".about", start: "top 85%" },
+      });
+
+      // Expertise Parallax & ClipPath
+      const article = expertiseRef.current!.querySelector("article");
+      gsap.from(article, {
+        clipPath: "inset(100% 0% 0% 0%)",
+        duration: 1.4,
+        ease: "power4.inOut",
+        scrollTrigger: { trigger: expertiseRef.current, start: "top 80%" },
+      });
+      gsap.to(article, {
+        y: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: article,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 1.5,
+        },
+      });
+
+      // Card Blur & Reveal
+      cardsRef.current?.querySelectorAll(".card").forEach((card, i) => {
+        const title = card.querySelector("h6");
+        const desc = card.querySelector("p");
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: card, start: "top 85%" },
+          delay: i * 0.15,
+        });
+        tl.from(title, { opacity: 0, y: 16, duration: 0.6, ease: "power3.out" });
+        if (desc) {
+          const split = new SplitText(desc, { type: "words" });
+          tl.from(split.words, {
+            opacity: 0,
+            y: 8,
+            filter: "blur(4px)",
+            duration: 0.5,
+            ease: "power2.out",
+            stagger: 0.02,
+          }, "-=0.1");
+        }
+      });
+
+      // Name SplitText
+      const ttl = gsap.timeline({
+        scrollTrigger: { trigger: ".name", start: "top 80%" },
+      });
+      ttl.from(".name h4", { opacity: 0, duration: 0.5, ease: "power3.out", stagger: 0.1 });
+      const name = new SplitText(".name h6", { type: "chars" });
+      ttl.from(name.chars, { opacity: 0, y: 2, duration: 0.5, ease: "power3.out", stagger: 0.05 });
+
+      // Footer Text SplitText (Appended to the ftl timeline initialized above)
+      const pf = new SplitText(".footer p", { type: "chars" });
+      const h4f = new SplitText(".footer h4", { type: "words" });
+      ftl.from(pf.chars, {
+        opacity: 0,
+        y: 10,
+        duration: 0.5,
+        ease: "power3.out",
+        stagger: 0.02,
+      });
+      ftl.from(h4f.words, {
+        opacity: 0,
+        y: 10,
+        duration: 0.5,
+        ease: "power3.out",
+        stagger: 0.3,
+        delay: 0.3,
+      }, "-=0.3");
+
+    });
+    return () => mm.revert();
+
+  }, { scope: aboutRef });
 
   return (
     <main
@@ -493,7 +458,7 @@ gsap.timeline({
       </section>
 
       {/* Me */}
-      <section className="min-h-screen flex max-md:flex-col-reverse gap-10 justify-end items-center max-md:mt-30" ref={sectionRef}>
+      <section className="min-h-screen flex max-md:flex-col-reverse gap-10 justify-end items-center max-md:mt-40" ref={sectionRef}>
         <article
           className="h-30 min-w-75 w-full md:w-[40vw] relative md:absolute left-0 bg-cover bg-center"
           ref={filmRef}
@@ -580,7 +545,7 @@ gsap.timeline({
           )
         })()}
 
-        <div className="w-full absolute bottom-10 left-0 flex max-md:flex-col max-md:items-start justify-between text-center max-md:gap-5">
+        <div className="w-full absolute bottom-10 left-0 flex max-md:flex-col max-md:items-start justify-between max-md:gap-5 md:text-center">
           <article className="stack-col flex flex-col items-center gap-3">
             <p className="text-[10px] md:text-sm font-semibold uppercase w-30 md:w-60">
               Frontend
@@ -604,7 +569,7 @@ gsap.timeline({
         </p>
       </section>
 
-      <div className="h-screen"></div>
+      <div className="h-[40vh] m"></div>
 
       {/* Hobbies */}
       <section
