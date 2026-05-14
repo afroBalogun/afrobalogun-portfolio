@@ -5,6 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
+export const navLinks = [
+  { title: "about", href: "/about", angle: 45 },
+  { title: "works", href: "/works", angle: 135 },
+  { title: "playground", href: "/playground", angle: 225 },
+  { title: "contact", href: "/contact", angle: 315 },
+];
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -36,12 +43,6 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', updateRadius);
   }, []);
 
-  const navLinks = [
-    { title: "about", href: "/about", angle: 45 },
-    { title: "works", href: "/works", angle: 135 },
-    { title: "playground", href: "/playground", angle: 225 },
-    { title: "contact", href: "/contact", angle: 315 },
-  ];
 
   const adminpathname = usePathname().includes("admin")
 
