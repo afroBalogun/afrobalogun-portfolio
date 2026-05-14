@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import Work from "./Work"
+import Work from "../../../components/Work"
 
 interface Props {
   params: Promise<{ slug: string }>

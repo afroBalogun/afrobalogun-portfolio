@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import Contact from "./Contact";
+import Contact from "../../components/Contact";
 
 export const metadata: Metadata = {
   title: "Contact — Obasa Temiloluwa",

@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import Works from "./Works";
+import Works from "../../components/Works";
 
 export const metadata: Metadata = {
   title: "Works — Obasa Temiloluwa",

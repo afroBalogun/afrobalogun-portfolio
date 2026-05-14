@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import Playground from "./Playground";
+import Playground from "../../components/Playground";
 
 export const metadata: Metadata = {
   title: "Playground — Obasa Temiloluwa",
