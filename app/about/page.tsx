@@ -1,3 +1,4 @@
+import About from "@/components/About"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -6,7 +7,7 @@ export const metadata: Metadata = {
   keywords: ["Obasa Temiloluwa", "about", "creative developer", "frontend developer", "fullstack developer", "Nigeria"],
 }
 
-export default function About(){
+export default function Page(){
   return(
     <>
     <About/>
