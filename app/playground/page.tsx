@@ -13,42 +13,53 @@ interface PlaygroundWork {
 
 const CARD_W = 100
 const CARD_H = 120
-const GAP    = 64
+const GAP = 64
 
 const staticTags = [
-  { label: "(random designs)",    left: "8%",  top: "72%" },
-  { label: "(explorations)",      left: "30%", top: "76%" },
+  { label: "(random designs)", left: "8%", top: "72%" },
+  { label: "(explorations)", left: "30%", top: "76%" },
   { label: "(rejected versions)", left: "54%", top: "72%" },
 ]
 
+let cachedWorks: PlaygroundWork[] | null = null
+
+function buildRows(data: PlaygroundWork[]): PlaygroundWork[][] {
+  return [
+    data.filter((_, i) => i % 3 === 0),
+    data.filter((_, i) => i % 3 === 1),
+    data.filter((_, i) => i % 3 === 2),
+  ]
+}
+
 export default function Playground() {
-  const containerRef  = useRef<HTMLDivElement>(null)
-  const trackRef      = useRef<HTMLDivElement>(null)
-  const modalRef      = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
 
-  const xTarget    = useRef(0)
-  const xCurrent   = useRef(0)
-  const maxScroll  = useRef(0)
-  const raf        = useRef<number | null>(null)
-  const dragging   = useRef(false)
+  const xTarget = useRef(0)
+  const xCurrent = useRef(0)
+  const maxScroll = useRef(0)
+  const raf = useRef<number | null>(null)
+  const dragging = useRef(false)
   const dragStartX = useRef(0)
-  const dragBaseX  = useRef(0)
-  const isOpen     = useRef(false)
+  const dragBaseX = useRef(0)
+  const isOpen = useRef(false)
 
-  const [works, setWorks]       = useState<PlaygroundWork[]>([])
-  const [rows, setRows]         = useState<PlaygroundWork[][]>([[], [], []])
+  const [works, setWorks] = useState<PlaygroundWork[]>(cachedWorks ?? [])
+  const [rows, setRows] = useState<PlaygroundWork[][]>(
+    cachedWorks ? buildRows(cachedWorks) : [[], [], []]
+  )
   const [selected, setSelected] = useState<PlaygroundWork | null>(null)
 
   useEffect(() => {
+    if (cachedWorks) return
+
     fetch("/api/playground")
       .then((r) => r.json())
       .then((data: PlaygroundWork[]) => {
+        cachedWorks = data
         setWorks(data)
-        setRows([
-          data.filter((_, i) => i % 3 === 0),
-          data.filter((_, i) => i % 3 === 1),
-          data.filter((_, i) => i % 3 === 2),
-        ])
+        setRows(buildRows(data))
       })
   }, [])
 
@@ -116,9 +127,9 @@ export default function Playground() {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isOpen.current) return
-    dragging.current   = true
+    dragging.current = true
     dragStartX.current = e.pageX
-    dragBaseX.current  = xTarget.current
+    dragBaseX.current = xTarget.current
   }
 
   const handleCardClick = useCallback((e: React.MouseEvent, work: PlaygroundWork) => {
@@ -268,7 +279,7 @@ export default function Playground() {
               }
             </div>
 
-            
+
           </div>
         </div>
       )}

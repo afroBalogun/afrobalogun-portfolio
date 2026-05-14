@@ -23,12 +23,19 @@ const ratioSize: Record<1 | 2 | 3, string> = {
   3: "w-40 h-40",   // square
 }
 
+let cachedGroups: { year: string; items: Project[] }[] | null = null
+
+
 export default function Works() {
   const mainRef = useRef<HTMLDivElement>(null)
-  const [groups, setGroups] = useState<{ year: string; items: Project[] }[]>([])
+  const [groups, setGroups] = useState<{ year: string; items: Project[] }[]>(
+    cachedGroups ?? []
+  )
   const titleAnimatedRef = useRef(false)
 
   useEffect(() => {
+    if (cachedGroups) return  // already fetched, skip
+
     fetch("/api/projects")
       .then((r) => r.json())
       .then((projects: Project[]) => {
@@ -38,10 +45,11 @@ export default function Works() {
           if (!map.has(y)) map.set(y, [])
           map.get(y)!.push(p)
         }
-        setGroups(Array.from(map.entries()).map(([year, items]) => ({ year, items })))
+        const result = Array.from(map.entries()).map(([year, items]) => ({ year, items }))
+        cachedGroups = result
+        setGroups(result)
       })
   }, [])
-
   useGSAP(() => {
     if (!groups.length) return
 
