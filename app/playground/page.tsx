@@ -64,7 +64,7 @@ export default function Playground() {
       if (!cards?.length) return
       gsap.fromTo(cards,
         { opacity: 0, y: 24 },
-        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: { amount: 0.9, from: "start" } }
+        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: { amount: 0.2, from: "start" } }
       )
     }, 50)
     return () => clearTimeout(id)

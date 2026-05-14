@@ -39,6 +39,40 @@ export default function About() {
   ]
 
   const [hoveredHobby, setHoveredHobby] = useState<string | null>(null)
+  const [activeStackCol, setActiveStackCol] = useState<number | null>(null)
+
+  const stackCollages = [
+    {
+      images: [
+        { src: "/logos/react.png", x: 8, y: 12, w: 80, rotate: -3, delay: 0 },
+        { src: "/logos/nextjs.png", x: 22, y: 45, w: 70, rotate: 4, delay: 60 },
+        { src: "/logos/tailwind.png", x: 62, y: 18, w: 75, rotate: -5, delay: 90 },
+        { src: "/logos/gsap.png", x: 76, y: 52, w: 65, rotate: 3, delay: 130 },
+        { src: "/logos/rn.png", x: 40, y: 62, w: 72, rotate: -2, delay: 50 },
+      ],
+      labels: ["REACT.JS", "NEXT.JS", "TAILWIND CSS", "GSAP", "REACT NATIVE", "CSS3"],
+    },
+    {
+      images: [
+        { src: "/logos/node.png", x: 10, y: 20, w: 85, rotate: -4, delay: 0 },
+        { src: "/logos/express.png", x: 55, y: 10, w: 75, rotate: 3, delay: 70 },
+        { src: "/logos/mongo.png", x: 30, y: 48, w: 90, rotate: -2, delay: 110 },
+        { src: "/logos/postgres.png", x: 68, y: 38, w: 78, rotate: 5, delay: 80 },
+        { src: "/logos/spring.png", x: 20, y: 68, w: 68, rotate: 2, delay: 150 },
+      ],
+      labels: ["NODE.JS", "EXPRESS.JS", "MONGODB", "POSTGRESQL", "SPRING BOOT"],
+    },
+    {
+      images: [
+        { src: "/logos/figma.png", x: 12, y: 15, w: 80, rotate: -3, delay: 0 },
+        { src: "/logos/framer.png", x: 58, y: 8, w: 72, rotate: 4, delay: 60 },
+        { src: "/logos/git.png", x: 32, y: 45, w: 85, rotate: -1, delay: 100 },
+        { src: "/logos/vercel.png", x: 70, y: 40, w: 70, rotate: 5, delay: 80 },
+        { src: "/logos/linux.png", x: 45, y: 65, w: 75, rotate: -4, delay: 140 },
+      ],
+      labels: ["FIGMA", "FRAMER", "GIT", "VERCEL", "LINUX", "REST APIs"],
+    },
+  ]
 
   const hobbyCollages: Record<string, {
     title: string
@@ -69,9 +103,9 @@ export default function About() {
     reading: {
       title: "pages",
       images: [
-        { src: "/subject.png", x: 10, y: 18, w: 115, rotate: -3, delay: 0 },
-        { src: "/subject2.png", x: 55, y: 6, w: 88, rotate: 4, delay: 50 },
-        { src: "/subject3.png", x: 28, y: 42, w: 130, rotate: -1, delay: 100 },
+        { src: "/subject.jpg", x: 10, y: 18, w: 115, rotate: -3, delay: 0 },
+        { src: "/subject2.jpg", x: 55, y: 6, w: 88, rotate: 4, delay: 50 },
+        { src: "/subject3.jpg", x: 28, y: 42, w: 130, rotate: -1, delay: 100 },
         { src: "/reading/4.jpg", x: 66, y: 30, w: 82, rotate: 6, delay: 70 },
         { src: "/reading/5.jpg", x: 18, y: 63, w: 100, rotate: 2, delay: 140 },
         { src: "/reading/6.jpg", x: 48, y: 58, w: 78, rotate: -4, delay: 180 },
@@ -237,7 +271,7 @@ export default function About() {
       scrollTrigger: { trigger: expertiseRef.current, start: "top 80%" },
     })
     gsap.to(article, {
-      y: -40,
+      y: 0,
       ease: "none",
       scrollTrigger: {
         trigger: article,
@@ -259,7 +293,6 @@ export default function About() {
       })
 
       tl.from(title, { opacity: 0, y: 16, duration: 0.6, ease: "power3.out" })
-        .from(line, { scaleX: 0, transformOrigin: "left center", duration: 0.5, ease: "power2.inOut" }, "-=0.2")
 
       if (desc) {
         const split = new SplitText(desc, { type: "words" })
@@ -289,27 +322,31 @@ export default function About() {
     // Page stays locked until all three columns have been revealed
     const cols = gsap.utils.toArray<HTMLElement>(".stack-col")
 
-    gsap.set(cols, { opacity: 0.15 })
+gsap.set(cols, { opacity: 0.15, scale: 0.92 })
 
-    gsap.timeline({
-      scrollTrigger: {
-        trigger: stackRef.current,
-        start: "top top",
-        end: "+=900",        // 3 × 300px — one beat per column
-        pin: true,
-        anticipatePin: 1,
-        scrub: 0.8,
-      },
-    })
-      // col 0 lights up
-      .to(cols[0], { opacity: 1, duration: 1 })
-      // col 0 dims, col 1 lights up
-      .to(cols[0], { opacity: 0.15, duration: 1 })
-      .to(cols[1], { opacity: 1, duration: 1 }, "<")
-      // col 1 dims, col 2 lights up — scroll unlocks only after this completes
-      .to(cols[1], { opacity: 0.15, duration: 1 })
-      .to(cols[2], { opacity: 1, duration: 1 }, "<")
-
+gsap.timeline({
+  scrollTrigger: {
+    trigger: stackRef.current,
+    start: "top top",
+    end: "+=500",        // shorter scroll distance = faster
+    pin: true,
+    scrub: 0.3,          // tighter scrub = snappier
+    onUpdate: (self) => {
+      const p = self.progress
+      if (p < 0.02)      setActiveStackCol(null)
+      else if (p < 0.38) setActiveStackCol(0)
+      else if (p < 0.65) setActiveStackCol(1)
+      else               setActiveStackCol(2)
+    },
+    onLeaveBack: () => setActiveStackCol(null),
+    onLeave:     () => setActiveStackCol(null),
+  },
+})
+  .to(cols[0], { opacity: 1, scale: 1, duration: 0.4 })
+  .to(cols[0], { opacity: 0.15, scale: 0.92, duration: 0.4 })
+  .to(cols[1], { opacity: 1, scale: 1, duration: 0.4 }, "<")
+  .to(cols[1], { opacity: 0.15, scale: 0.92, duration: 0.4 })
+  .to(cols[2], { opacity: 1, scale: 1, duration: 0.4 }, "<")
     // Hobbies articles fade up
     gsap.from(
       hobbiesRef.current!.querySelectorAll("article:not(:last-child)"),
@@ -435,7 +472,7 @@ export default function About() {
         <div className="flex flex-col justify-around items-end gap-20">
           <article
             className="h-60 md:h-125 w-60 md:w-125 relative flex justify-center py-10 bg-cover bg-center grayscale"
-            style={{ backgroundImage: "url('/steve.png')" }}
+            style={{ backgroundImage: "url('/steve.jpg')" }}
           >
             <div
               ref={mask1Ref}
@@ -460,7 +497,7 @@ export default function About() {
         <article
           className="h-30 min-w-75 w-full md:w-[40vw] relative md:absolute left-0 bg-cover bg-center"
           ref={filmRef}
-          style={{ backgroundImage: "url('/lib.png')" }}
+          style={{ backgroundImage: "url('/lib.jpg')" }}
         />
 
         <div ref={itemsRef} className="flex flex-col justify-between items-center gap-20 z-20">
@@ -480,43 +517,26 @@ export default function About() {
       <section className="flex flex-col gap-20 md:gap-40" ref={expertiseRef}>
         <h6 className="font-semibold font-mono text-4xl tracking-[0.4em] mb-2 about">about</h6>
 
-        <div className="flex max-md:flex-col-reverse items-left md:items-center justify-between gap-5">
-          <div className="flex flex-col w-[80vw]">
-            <article
-              className="h-[70vh] w-[80vw] bg-neutral-800 relative overflow-hidden"
-              style={{ backgroundImage: "url('/lib.png')" }}
-
-            >
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: "linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.025) 40%, transparent 70%)",
-                  animation: "drift 8s ease-in-out infinite alternate",
-                }}
-              />
-              <style>{`@keyframes drift { from { transform: translateX(-10%) translateY(-5%); } to { transform: translateX(10%) translateY(5%); } }`}</style>
-              {["top-3 left-3", "top-3 right-3", "bottom-3 left-3", "bottom-3 right-3"].map((pos, i) => (
-                <div key={i} className={`absolute ${pos} w-4 h-4 pointer-events-none`}>
-                  <div className="absolute bg-neutral-500" style={{ width: "100%", height: "1px", top: i < 2 ? 0 : "auto", bottom: i < 2 ? "auto" : 0 }} />
-                  <div className="absolute bg-neutral-500" style={{ height: "100%", width: "1px", left: i % 2 === 0 ? 0 : "auto", right: i % 2 === 0 ? "auto" : 0, top: 0 }} />
-                </div>
-              ))}
-            </article>
-
-            <div ref={cardsRef} className="flex max-md:flex-col gap-5">
-              {expertise.map((item, index) => (
-                <div key={index} className="card flex flex-col gap-3 mt-10">
-                  <h6 className="text-xs font-semibold uppercase mb-1">{item.title}</h6>
-                  {/* <div
+        <div className="flex max-md:flex-col-reverse items-left md:items-end justify-between gap-20">
+          <article
+            className="h-[60vh] w-full md:w-[50vw] md:h-screen overflow-hidden flex justify-center items-end bg-cover bg-center grayscale-60"
+            style={{ backgroundImage: "url('/desk.jpg')" }}
+          >
+            {/* <img src="black-fro.png" alt="" /> */}
+          </article>
+          {/* <p className="text-xs">(Expertise)</p> */}
+          <div ref={cardsRef} className="grid md:grid-cols-2 gap-5 mb-">
+            {expertise.map((item, index) => (
+              <div key={index} className="card flex flex-col gap-3 mt-10">
+                <h6 className="text-xs font-semibold uppercase mb-1">{item.title}</h6>
+                {/* <div
                     className="expertise-line w-full h-px bg-neutral-700 mb-2"
                     style={{ transformOrigin: "left center" }}
                   /> */}
-                  <p className="text-sm font-light max-w-100">{item.description}</p>
-                </div>
-              ))}
-            </div>
+                <p className="text-xs font-light max-w-100">{item.description}</p>
+              </div>
+            ))}
           </div>
-          <p className="text-xs">(Expertise)</p>
         </div>
       </section>
 
@@ -524,44 +544,56 @@ export default function About() {
       <section className="h-screen relative flex justify-center items-center" ref={stackRef}>
         <h2 className="font-semibold font-mono text-4xl tracking-[0.4em] stack">stack</h2>
 
-        <div className="w-full absolute bottom-10 left-0 flex max-md:flex-col max-md:items-start justify-between text-center max-md:gap-5">
-          <article className="stack-col flex flex-col items-center">
-            <img src="/dine.png"
-              alt="dining table"
-              className="h-15 md:h-30"
-            />
-            <p className=" text-[10px] md:text-sm font-light w-30 md:w-60">
-              React.js, Next.js, React Native, Tailwind CSS, CSS3, GSAP.
-            </p>
-          </article>
-
-          <article className="stack-col flex flex-col items-center">
-            <div className="flex justify-center items-end gap-4">
-              <img src="/salt.png"
-                alt="Season"
-                className="h-10 md:h-15"
-              />
-              <img src="/cook.png"
-                alt="cook"
-                className="h-15 md:h-30"
-              />
-              <img src="/muah.png"
-                alt="muah"
-                className="h-12 md:h-18"
-              />
+        {/* Scatter overlay — same pattern as hobbies */}
+        {activeStackCol !== null && (() => {
+          const col = stackCollages[activeStackCol]
+          return (
+            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+              {col.images.map((img, i) => (
+                <div
+                  key={i}
+                  className="scatter-item absolute"
+                  style={{
+                    left: `${img.x}%`,
+                    top: `${img.y}%`,
+                    width: img.w,
+                    transform: `rotate(${img.rotate}deg)`,
+                    animationDelay: `${img.delay}ms`,
+                  }}
+                >
+                </div>
+              ))}
+              {col.labels.map((lbl, i) => (
+                <span
+                  key={i}
+                  className="scatter-label absolute text-[10px] font-semibold tracking-[0.18em] uppercase opacity-60"
+                  style={{
+                    left: `${20 + (i * 13) % 60}%`,
+                    top: `${30 + (i * 17) % 40}%`,
+                    animationDelay: `${i * 40}ms`,
+                  }}
+                >
+                  {lbl}
+                </span>
+              ))}
             </div>
-            <p className="text-[10px] md:text-sm font-light  w-30 md:w-60">
-              Node.js, Express.js, MongoDB, PostgreSQL, Spring Boot.
+          )
+        })()}
+
+        <div className="w-full absolute bottom-10 left-0 flex max-md:flex-col max-md:items-start justify-between text-center max-md:gap-5">
+          <article className="stack-col flex flex-col items-center gap-3">
+            <p className="text-[10px] md:text-sm font-semibold uppercase w-30 md:w-60">
+              Frontend
             </p>
           </article>
-
-          <article className="stack-col flex flex-col items-center">
-            <img src="/utensils.png"
-              alt="utensils"
-              className="h-15 md:h-30"
-            />
-            <p className=" text-[10px] md:text-sm font-light  w-30 md:w-60">
-              Figma, Framer, Git, Vercel, Linux, REST APIs.
+          <article className="stack-col flex flex-col items-center gap-3">
+            <p className="text-[10px] md:text-sm font-semibold uppercase w-30 md:w-60">
+              Backend
+            </p>
+          </article>
+          <article className="stack-col flex flex-col items-center gap-3">
+            <p className="text-[10px] md:text-sm font-semibold uppercase w-30 md:w-60">
+              Tools
             </p>
           </article>
         </div>
@@ -715,7 +747,7 @@ export default function About() {
             className="absolute z-10 inset-0 bg-primary"
             style={{ transformOrigin: "right center" }}
           />
-          <img src="tree.png" alt="Tree" className="max-md:h-50"/>
+          <img src="tree.png" alt="Tree" className="max-md:h-50" />
 
         </div>
       </section>

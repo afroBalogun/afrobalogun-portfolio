@@ -1,12 +1,26 @@
 "use client";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [radius, setRadius] = useState(180);
+  const navRef = useRef<HTMLElement>(null);
+
+  useGSAP(() => {
+    gsap.from(["button", "menu"], {
+      opacity: 0,
+      y: -8,
+      duration: 1.2,
+      ease: "power3.out",
+      stagger: 0.15,
+      delay: 2.3
+    })
+  }, { scope: navRef })
 
   useEffect(() => {
     const updateRadius = () => {
@@ -27,7 +41,7 @@ export default function Navbar() {
   const pathname = usePathname().includes("admin")
 
   return (
-    <nav className={`${pathname ? "hidden" : ""}`}>
+    <nav className={`${pathname ? "hidden" : ""}`} ref={navRef}>
       {/* Floating menu trigger - bottom right corner */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}

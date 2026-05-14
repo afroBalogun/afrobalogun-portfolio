@@ -5,7 +5,7 @@ import { useRef, useLayoutEffect } from "react"
 import gsap from "gsap"
 
 const contacts = [
-  { id: "01", label: "hello@afrobalogun.com", href: "mailto:hello@afrobalogun.com", col: "col-start-1", row: "row-start-2" },
+  { id: "01", label: "obam771@gmail.com", href: "mailto:obam771@gmail.com", col: "col-start-1", row: "row-start-2" },
   { id: "02", label: "LinkedIn",              href: "https://www.linkedin.com/in/temiloluwa-obasa-786b7817b/", col: "md:col-start-2", row: "row-start-3 md:row-start-2" },
   { id: "03", label: "+234 706 967 5136",     href: "tel:+2347069675136",           col: "md:col-start-3", row: "row-start-4 md:row-start-3" },
   { id: "04", label: "github",                href: "https://github.com/afroBalogun",           col: "md:col-start-2", row: "row-start-5 md:row-start-4" },
