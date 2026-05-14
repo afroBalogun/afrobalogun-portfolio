@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
-export const navLinks = [
+const navLinks = [
   { title: "about", href: "/about", angle: 45 },
   { title: "works", href: "/works", angle: 135 },
   { title: "playground", href: "/playground", angle: 225 },
