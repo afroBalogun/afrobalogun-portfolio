@@ -21,8 +21,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Obasa Temiloluwa",
-    template: "%s | Obasa Temiloluwa",
+    default: "afroBalogun",
+    template: "%s | afroBalogun",
   },
   description: "Creative developer portfolio.",
   keywords: [
