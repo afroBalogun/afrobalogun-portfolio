@@ -223,7 +223,7 @@ export default function Playground() {
           {/* Panel */}
           <div
             ref={modalRef}
-            className="relative z-10 flex flex-col w-[min(900px,90vw)] h-[min(720px,85vh)] bg-primary border border-neutral-800"
+            className="relative z-10 flex flex-col w-[min(900px,90vw)] h-[60vh] md:min-h-[90vh] bg-primary border border-neutral-800"
             style={{ opacity: 0 }}
           >
             {/* Meta */}
