@@ -1,7 +1,7 @@
 "use client"
 import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 
 gsap.registerPlugin(useGSAP)
 
@@ -60,21 +60,26 @@ export default function Home() {
         ease: "power3.out",
       }, "-=0.4")
 
+      // 6. A beat after everything settles, the images come alive (CSS animations gated on .alive)
+      .call(() => homeRef.current?.classList.add("alive"), [], "+=1.2")
+
+    // from() has applied its start states above, so it's now safe to show the SSR-hidden page
+    gsap.set(homeRef.current, { visibility: "visible" })
   }, { scope: homeRef })
 
   return (
-    <main className="min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-12 flex flex-col justify-between" ref={homeRef}>
+    <main className="min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-12 flex flex-col justify-between" ref={homeRef} style={{ visibility: "hidden" }}>
 
       {/* Quotes */}
-      <div className="flex max-sm:flex-col justify-between max-sm:w-full mt-10">
-        <div className="md:absolute md:top-1/5 max-sm:mt-5">
-          <p className="quote-text text-[10px] lg:text-xs font-extralight uppercase md:w-65 max-md:w-56">
+      <div className="flex max-sm:flex-col justify-between max-sm:w-full mt-10 max-lg:mb-12">
+        <div className="lg:absolute lg:top-1/5 max-sm:mt-5">
+          <p className="quote-text text-2xs lg:text-xs font-extralight uppercase md:w-65 max-md:w-56">
             "Put your name on everything you do."<br />
             <span className="font-semibold">— Mark Perrett</span>
           </p>
         </div>
-        <div className="mt-6 sm:mt-8 md:mt-0 md:absolute md:right-8 lg:right-20 md:bottom-1/3 max-sm:flex max-sm:justify-end">
-          <p className="quote-text text-[10px] lg:text-xs font-extralight uppercase md:w-65 max-md:w-56 text-right">
+        <div className="mt-6 sm:mt-8 lg:mt-0 lg:absolute lg:right-20 lg:bottom-1/3 max-sm:flex max-sm:justify-end">
+          <p className="quote-text text-2xs lg:text-xs font-extralight uppercase md:w-65 max-md:w-56 text-right">
             "Every great design begins with an even better story."<br />
             <span className="font-semibold">— Lorinda Mamo</span>
           </p>
@@ -82,7 +87,7 @@ export default function Home() {
       </div>
 
       {/* Hero */}
-      <section className="w-full flex-1 flex flex-col justify-center max-md:items-center gap-5 lg:gap-8 relative">
+      <section className="w-full flex-1 flex flex-col justify-center-safe max-md:items-center gap-5 lg:gap-8 relative">
 
         <p id="topname" className="text-xs lg:text-sm font-light uppercase text-center">
           <span className="font-semibold">Temiloluwa Obasa,</span> (he/him) <br />
@@ -95,7 +100,34 @@ export default function Home() {
           <article className="relative w-fit flex items-center justify-center">
             <h4 className="z-10 absolute top-0 text-xs left-2 max-sm:left-4 max-sm:top-3 font-semibold" ref={lbl1Ref} style={{ whiteSpace: "pre" }} />
             <div className="relative overflow-hidden">
-              <img src="neko.png" alt="cat" className="pointer-events-none scale-90 max-sm:scale-80" />
+              {/* tail box measured from neko.png (215x309): x 78–132, y ≥ 216, where the PNG is transparent around it */}
+              <div className="relative pointer-events-none scale-90 max-sm:scale-80">
+                <img src="neko.png" alt="cat" className="block w-[13.4375rem]" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 61.4% 100%, 61.4% 70.6%, 36.3% 70.6%, 36.3% 100%, 0 100%)" }} />
+                <img
+                  src="neko.png"
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full motion-safe:in-[.alive]:animate-tail-sway"
+                  style={{ clipPath: "inset(69.9% 38.6% 0 36.3%)", transformOrigin: "50.2% 69.9%" }}
+                />
+                {/* ears: a grey patch hides the original ear tip (not the base, so tilting shows no seam) and the copy flattens toward its base */}
+                <div className="absolute bg-[#D9D9D9]" style={{ inset: "27.8% 54.9% 68.6% 36.3%" }} />
+                <img
+                  src="neko.png"
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full motion-safe:in-[.alive]:animate-ear-twitch-l"
+                  style={{ clipPath: "inset(27.8% 54.9% 67.6% 36.3%)", transformOrigin: "42.3% 32.4%", animationDelay: "1.6s" }}
+                />
+                <div className="absolute bg-[#D9D9D9]" style={{ inset: "27.2% 40.9% 69.3% 51.2%" }} />
+                <img
+                  src="neko.png"
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full motion-safe:in-[.alive]:animate-ear-twitch-r"
+                  style={{ clipPath: "inset(27.2% 40.9% 68.3% 51.2%)", transformOrigin: "54% 31.7%", animationDelay: "3.4s" }}
+                />
+              </div>
               {/* Brush mask — covers image, animates to scaleX(0) */}
               <div
                 ref={mask1Ref}
@@ -109,7 +141,17 @@ export default function Home() {
           <article className="relative w-fit flex items-center justify-center pt-2 sm:pt-1">
             <h4 className="z-10 absolute bottom-3 text-xs right-3 max-sm:right-4 max-sm:bottom-4 font-semibold text-[#C1C1C1]" ref={lbl2Ref} />
             <div className="relative overflow-hidden">
-              <img src="balo.png" alt="afrobalogun silhouette" className="pointer-events-none scale-90 max-sm:scale-80" />
+              <div className="relative pointer-events-none scale-90 max-sm:scale-80">
+                <img src="balo.png" alt="afrobalogun silhouette" className="block w-[13.4375rem]" />
+                {/* figure starts at y=62 of 215; clipping above it keeps the moving top edge inside flat background */}
+                <img
+                  src="balo.png"
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full origin-bottom motion-safe:in-[.alive]:animate-breathe"
+                  style={{ clipPath: "inset(20% 0 0 0)", animationDelay: "0.8s" }}
+                />
+              </div>
               <div
                 ref={mask2Ref}
                 className="absolute inset-0 bg-white dark:bg-black"
@@ -130,17 +172,30 @@ export default function Home() {
       {/* Meta */}
       <div className="flex flex-col sm:flex-row justify-around items-end gap-6 mt-8">
         <p className="meta-item text-xs hidden md:block">
-          Minimalist by choice.<br />
-          <span className="ml-5">Interactive by nature.</span>
+          Based in Nigeria · <WatClock /> WAT.<br />
+          <span className="ml-5">Available for work.</span>
         </p>
         <div className="meta-item hidden md:block">
           <h6 className="font-semibold text-xs mb-1">Inquiries & Proposals.</h6>
-          <p className="text-[10px] opacity-80">Reach out to start a technical consultation.</p>
+          <p className="text-2xs opacity-80">Reach out to start a technical consultation.</p>
         </div>
       </div>
 
     </main>
   )
+}
+
+// Live time in Lagos; empty until mounted so the build-time HTML doesn't bake in a stale time
+const watFormat = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Lagos", hour: "2-digit", minute: "2-digit" })
+function WatClock() {
+  const [time, setTime] = useState("")
+  useEffect(() => {
+    const tick = () => setTime(watFormat.format(new Date()))
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
+  return <time className="tabular-nums">{time}</time>
 }
 
 // Typewriter utility

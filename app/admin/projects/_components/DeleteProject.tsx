@@ -12,7 +12,7 @@ export function DeleteProject({ slug }: { slug: string }) {
   }
 
   return (
-    <button onClick={del} className="text-[10px] tracking-widest text-red-400/60 hover:text-red-400 transition-colors">
+    <button onClick={del} className="text-2xs tracking-widest text-red-700/70 hover:text-red-700 transition-colors">
       delete
     </button>
   )

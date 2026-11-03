@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { notFound } from "next/navigation"
 import Work from "../../../components/Work"
 
 interface Props {
@@ -8,7 +9,8 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/projects/${slug}`)
-  const project = await res.json()
+  if (res.status === 404) notFound()
+  const project = res.ok ? await res.json() : null
 
   return {
     title: `${project?.client} — Obasa Temiloluwa`,

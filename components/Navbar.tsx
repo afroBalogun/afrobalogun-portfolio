@@ -23,9 +23,10 @@ export default function Navbar() {
   useGSAP(() => {
     if (pathname !== "/") return
 
-    gsap.from(["button", "menu"], {
-      opacity: 0,
-      y: -8,
+    // fromTo, not from: on "/" they start at opacity-0 in the HTML so they don't flash before the intro
+    gsap.fromTo(["button", "menu"], { opacity: 0, y: -8 }, {
+      opacity: 1,
+      y: 0,
       duration: 1.2,
       ease: "power3.out",
       stagger: 0.15,
@@ -36,7 +37,8 @@ export default function Navbar() {
 
   useEffect(() => {
     const updateRadius = () => {
-      setRadius(window.innerWidth < 768 ? 140 : 180);
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 // grows past 1920 wide
+      setRadius((window.innerWidth < 768 ? 140 : 180) * rem);
     };
     updateRadius();
     window.addEventListener('resize', updateRadius);
@@ -51,8 +53,9 @@ export default function Navbar() {
       {/* Floating menu trigger - bottom right corner */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
-        className="fixed bottom-8 right-8 md:hidden md:right-12 z-50 w-16 h-16 md:w-20 md:h-20 flex items-center justify-center group animate-pulse-slow rounded-full bg-primary text-gray-600 shadow-lg focus:outline-none"
+        className={`${pathname === "/" ? "opacity-0" : ""} fixed bottom-8 right-8 md:hidden md:right-12 z-50 w-16 h-16 md:w-20 md:h-20 flex items-center justify-center group animate-pulse-slow rounded-full bg-primary text-gray-600 shadow-lg focus:outline-none`}
         aria-label="Toggle menu"
+        aria-expanded={menuOpen}
       >
         {/* Outer brush circle - pulses */}
         <div
@@ -86,12 +89,12 @@ export default function Navbar() {
           </svg>
         </div>
 
-        {/* Center character - transforms between 選 (select) and × */}
+        {/* Center label - transforms between "menu" and × */}
         <span
-          className={`relative z-10 font-bold text-lg md:text-xl transition-all duration-500 ${menuOpen ? 'rotate-90' : 'rotate-0'
+          className={`relative z-10 font-mono font-semibold transition-all duration-500 ${menuOpen ? 'rotate-90 text-xl' : 'rotate-0 text-2xs uppercase tracking-widest'
             }`}
         >
-          {menuOpen ? '×' : '選'}
+          {menuOpen ? '×' : 'menu'}
         </span>
       </button>
 
@@ -197,7 +200,7 @@ export default function Navbar() {
         })}
       </div>
 
-      <menu className="fixed top-6 md:top-10 left-0 w-full px-4 sm:px-6 md:px-8 lg:px-12  z-50 flex justify-between items-center font-mono text-white mix-blend-difference">
+      <menu className={`${pathname === "/" ? "opacity-0" : ""} fixed top-6 md:top-10 left-0 w-full px-4 sm:px-6 md:px-8 lg:px-12  z-50 flex justify-between items-center font-mono text-white mix-blend-difference`}>
         {/* Logo Container */}
         <Link
           href="/"

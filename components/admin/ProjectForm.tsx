@@ -30,8 +30,8 @@ interface Props {
   mode: "create" | "edit"
 }
 
-const field = "bg-transparent border border-neutral-800 px-3 py-2.5 text-xs outline-none focus:border-neutral-500 transition-colors w-full"
-const label = "text-[10px] tracking-widest uppercase opacity-40"
+const field = "bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors w-full"
+const label = "text-2xs tracking-widest uppercase opacity-40"
 
 export function ProjectForm({ initial, mode }: Props) {
   const router = useRouter()
@@ -77,7 +77,7 @@ export function ProjectForm({ initial, mode }: Props) {
 
       {/* Basic info */}
       <section className="flex flex-col gap-5">
-        <p className="text-[10px] tracking-[0.2em] uppercase opacity-30 border-b border-neutral-800 pb-3">info</p>
+        <p className="text-2xs tracking-[0.2em] uppercase opacity-30 border-b border-secondary/15 pb-3">info</p>
 
         <div className="grid grid-cols-2 gap-4">
           {([["title", "title"], ["client", "client name"], ["role", "role"], ["link", "live link (optional)"]] as const).map(([key, lbl]) => (
@@ -94,7 +94,7 @@ export function ProjectForm({ initial, mode }: Props) {
 
           <div className="flex flex-col gap-1.5">
             <label className={label}>ratio (card size on /works)</label>
-            <select className={`${field} bg-neutral-950`} value={data.ratio} onChange={(e) => set("ratio", Number(e.target.value) as 1 | 2 | 3)}>
+            <select className={`${field} bg-primary`} value={data.ratio} onChange={(e) => set("ratio", Number(e.target.value) as 1 | 2 | 3)}>
               <option value={1}>1 — portrait</option>
               <option value={2}>2 — landscape</option>
               <option value={3}>3 — square</option>
@@ -110,10 +110,10 @@ export function ProjectForm({ initial, mode }: Props) {
 
       {/* Body paragraphs */}
       <section className="flex flex-col gap-5">
-        <p className="text-[10px] tracking-[0.2em] uppercase opacity-30 border-b border-neutral-800 pb-3">body copy</p>
+        <p className="text-2xs tracking-[0.2em] uppercase opacity-30 border-b border-secondary/15 pb-3">body copy</p>
 
         {data.body.length === 0 && (
-          <p className="text-[10px] opacity-20 tracking-widest">no paragraphs yet</p>
+          <p className="text-2xs opacity-20 tracking-widest">no paragraphs yet</p>
         )}
 
         {data.body.map((para, i) => (
@@ -122,7 +122,7 @@ export function ProjectForm({ initial, mode }: Props) {
               <label className={label}>paragraph {i + 1}</label>
               <button
                 onClick={() => setData((d) => ({ ...d, body: d.body.filter((_, j) => j !== i) }))}
-                className="text-[9px] tracking-widest text-red-400/50 hover:text-red-400 transition-colors"
+                className="text-2xs tracking-widest text-red-700/70 hover:text-red-700 transition-colors"
               >
                 remove
               </button>
@@ -138,7 +138,7 @@ export function ProjectForm({ initial, mode }: Props) {
 
         <button
           onClick={() => setData((d) => ({ ...d, body: [...d.body, ""] }))}
-          className="text-[10px] tracking-widest border border-dashed border-neutral-700 px-4 py-2.5 hover:border-neutral-500 transition-colors self-start"
+          className="text-2xs tracking-widest border border-dashed border-secondary/25 px-4 py-2.5 hover:border-secondary/50 transition-colors self-start"
         >
           + add paragraph
         </button>
@@ -146,7 +146,7 @@ export function ProjectForm({ initial, mode }: Props) {
 
       {/* Images */}
       <section className="flex flex-col gap-5">
-        <p className="text-[10px] tracking-[0.2em] uppercase opacity-30 border-b border-neutral-800 pb-3">images</p>
+        <p className="text-2xs tracking-[0.2em] uppercase opacity-30 border-b border-secondary/15 pb-3">images</p>
         <ImageUpload label="cover image (hero)" value={data.coverImg} onChange={(url) => set("coverImg", url)} folder="portfolio/covers" />
         <div className="grid grid-cols-2 gap-4 mt-2">
           {data.images.map((img, i) => (
@@ -155,9 +155,9 @@ export function ProjectForm({ initial, mode }: Props) {
         </div>
       </section>
 
-      {error && <p className="text-[10px] text-red-400 tracking-widest">{error}</p>}
+      {error && <p className="text-2xs text-red-700 tracking-widest">{error}</p>}
 
-      <button onClick={save} disabled={saving} className="border border-neutral-700 px-6 py-3 text-xs tracking-[0.2em] uppercase hover:bg-neutral-800 transition-colors disabled:opacity-30 self-start">
+      <button onClick={save} disabled={saving} className="border border-secondary/25 px-6 py-3 text-xs tracking-[0.2em] uppercase hover:bg-secondary/5 transition-colors disabled:opacity-30 self-start">
         {saving ? "saving..." : mode === "create" ? "create project" : "save changes"}
       </button>
     </div>

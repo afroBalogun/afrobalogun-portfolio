@@ -447,13 +447,13 @@ export default function About() {
               style={{ transformOrigin: "right center" }}
             />
             <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-end p-6">
-              <p className="text-[10px] sm:text-xs font-extralight uppercase md:w-65 max-md:w-56 text-[#C1C1C1]">
+              <p className="text-2xs sm:text-xs font-extralight uppercase md:w-65 max-md:w-56 text-[#C1C1C1]">
                 "Design is not just what it looks like and feels like. Design is how it works."<br />
                 <span className="font-semibold">— Steve Jobs</span>
               </p>
             </div>
           </article>
-          <p className="font-light w-25 md:w-30 text-[10px] md:text-sm mr-20 shape">
+          <p className="font-light w-25 md:w-30 text-2xs md:text-sm mr-20 shape">
             shaping ideas into refined, immersive digital experiences.
           </p>
         </div>
@@ -500,7 +500,7 @@ export default function About() {
                     className="expertise-line w-full h-px bg-neutral-700 mb-2"
                     style={{ transformOrigin: "left center" }}
                   /> */}
-                <p className="text-xs font-light max-w-100">{item.description}</p>
+                <p className="text-sm font-light max-w-100">{item.description}</p>
               </div>
             ))}
           </div>
@@ -533,7 +533,7 @@ export default function About() {
               {col.labels.map((lbl, i) => (
                 <span
                   key={i}
-                  className="scatter-label absolute text-[10px] font-semibold tracking-[0.18em] uppercase opacity-60"
+                  className="scatter-label absolute text-2xs font-semibold tracking-[0.18em] uppercase opacity-60"
                   style={{
                     left: `${20 + (i * 13) % 60}%`,
                     top: `${30 + (i * 17) % 40}%`,
@@ -549,17 +549,17 @@ export default function About() {
 
         <div className="w-full absolute bottom-10 left-0 flex max-md:flex-col max-md:items-start justify-between max-md:gap-5 md:text-center">
           <article className="stack-col flex flex-col items-center gap-3">
-            <p className="text-[10px] md:text-sm font-semibold uppercase w-30 md:w-60">
+            <p className="text-2xs md:text-sm font-semibold uppercase w-30 md:w-60">
               Frontend
             </p>
           </article>
           <article className="stack-col flex flex-col items-center gap-3">
-            <p className="text-[10px] md:text-sm font-semibold uppercase w-30 md:w-60">
+            <p className="text-2xs md:text-sm font-semibold uppercase w-30 md:w-60">
               Backend
             </p>
           </article>
           <article className="stack-col flex flex-col items-center gap-3">
-            <p className="text-[10px] md:text-sm font-semibold uppercase w-30 md:w-60">
+            <p className="text-2xs md:text-sm font-semibold uppercase w-30 md:w-60">
               Tools
             </p>
           </article>
@@ -632,7 +632,7 @@ export default function About() {
               {collage.labels.map((lbl, i) => (
                 <span
                   key={i}
-                  className="scatter-label absolute text-[10px] font-semibold tracking-[0.18em] uppercase opacity-70"
+                  className="scatter-label absolute text-2xs font-semibold tracking-[0.18em] uppercase opacity-70"
                   style={{
                     left: `${lbl.x}%`,
                     top: `${lbl.y}%`,
@@ -654,7 +654,7 @@ export default function About() {
         >
           <p className="text-xs font-medium mb-2 music">music</p>
           <div className="relative">
-            <img src="earphones.png" alt="Earphones" />
+            <img src="earphones.png" alt="Earphones" className="w-[10.1875rem]" />
             <div
               ref={h1Ref}
               className="absolute z-10 inset-0 bg-primary"
@@ -669,7 +669,7 @@ export default function About() {
           onMouseLeave={() => setHoveredHobby(null)}
         >
           <div className="relative">
-            <img src="read.png" alt="Reading" />
+            <img src="read.png" alt="Reading" className="w-[10.1875rem]" />
             <div
               ref={h2Ref}
               className="absolute z-10 inset-0 bg-primary"
@@ -691,7 +691,7 @@ export default function About() {
               className="absolute z-10 inset-0 bg-primary"
               style={{ transformOrigin: "right center" }}
             />
-            <img src="anime.png" alt="Anime" />
+            <img src="anime.png" alt="Anime" className="w-[10.1875rem]" />
           </div>
         </article>
 
@@ -714,7 +714,7 @@ export default function About() {
             className="absolute z-10 inset-0 bg-primary"
             style={{ transformOrigin: "right center" }}
           />
-          <img src="tree.png" alt="Tree" className="max-md:h-50" />
+          <img src="tree.png" alt="Tree" className="w-[20.125rem] max-md:w-auto max-md:h-50" />
 
         </div>
       </section>

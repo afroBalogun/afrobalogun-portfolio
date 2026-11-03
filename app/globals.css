@@ -1,9 +1,14 @@
 @import "tailwindcss";
 
-/* :root {
-  --background: #ffffff;
-  --foreground: #171717;
-} */
+:root {
+  --background: #EBEBEB;
+  --foreground: #1E1E1E;
+}
+
+/* 16px up to 1920 wide, then grows with the viewport so 1440p/4K keep the same proportions */
+html {
+  font-size: max(16px, calc(100vw / 120));
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -13,6 +18,41 @@
   --font-inter: var(--font-inter);
   --color-primary: #EBEBEB;
   --color-secondary: #1E1E1E;
+
+  /* smallest text on the site: 11px at the 16px root */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+
+  --animate-tail-sway: tail-sway 3.2s ease-in-out infinite;
+  @keyframes tail-sway {
+    0%, 100% { transform: rotate(0deg); }
+    30% { transform: rotate(7deg); }
+    65% { transform: rotate(-5deg); }
+  }
+
+  /* quick double flick (flatten back + tilt) at the start of each cycle, then a long still stretch */
+  --animate-ear-twitch-l: ear-twitch-l 7s ease-in-out infinite;
+  @keyframes ear-twitch-l {
+    0%, 12%, 100% { transform: none; }
+    2.5% { transform: rotate(-8deg) scaleY(0.55); }
+    5% { transform: rotate(2deg) scaleY(1); }
+    7.5% { transform: rotate(-6deg) scaleY(0.65); }
+    10% { transform: none; }
+  }
+  --animate-ear-twitch-r: ear-twitch-r 9s ease-in-out infinite;
+  @keyframes ear-twitch-r {
+    0%, 12%, 100% { transform: none; }
+    2.5% { transform: rotate(8deg) scaleY(0.55); }
+    5% { transform: rotate(-2deg) scaleY(1); }
+    7.5% { transform: rotate(6deg) scaleY(0.65); }
+    10% { transform: none; }
+  }
+
+  --animate-breathe: breathe 5s ease-in-out infinite;
+  @keyframes breathe {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.02); }
+  }
 }
 
 /* @media (prefers-color-scheme: dark) {
@@ -25,5 +65,4 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }

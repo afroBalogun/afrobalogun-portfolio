@@ -20,6 +20,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://afrobalogun.com"),
   title: {
     default: "afroBalogun",
     template: "%s | afroBalogun",

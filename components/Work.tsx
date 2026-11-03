@@ -23,7 +23,7 @@ export default function Work() {
   const [project, setProject] = useState<Project | null>(null)
 
   useEffect(() => {
-    fetch(`/api/projects/${slug}`).then(r => r.json()).then(setProject)
+    fetch(`/api/projects/${slug}`).then(r => r.ok ? r.json() : null).then(setProject)
   }, [slug])
 
   useGSAP(() => {
@@ -78,14 +78,14 @@ export default function Work() {
       >
         {/* Top — identity */}
         <div className="flex flex-col gap-6">
-          <p className="panel-item text-[10px] font-mono tracking-[0.2em] uppercase opacity-30" style={{ opacity: 0 }}>
+          <p className="panel-item text-2xs font-mono tracking-[0.2em] uppercase opacity-30" style={{ opacity: 0 }}>
             {project.year}
           </p>
           <h1 className="panel-item font-mono font-semibold text-xl leading-snug" style={{ opacity: 0 }}>
             {project.client}
           </h1>
           <div className="panel-item h-px bg-current opacity-10 w-full" style={{ opacity: 0 }} />
-          <p className="panel-item text-xs text-secondary/50 leading-relaxed max-w-56" style={{ opacity: 0 }}>
+          <p className="panel-item text-sm text-secondary/60 leading-relaxed max-w-56" style={{ opacity: 0 }}>
             {project.description}
           </p>
         </div>
@@ -93,7 +93,7 @@ export default function Work() {
         {/* Mid — meta */}
         <div className="flex flex-col gap-5">
           <div className="panel-item flex flex-col gap-1" style={{ opacity: 0 }}>
-            <p className="text-[9px] font-mono tracking-[0.2em] uppercase opacity-30">role</p>
+            <p className="text-2xs font-mono tracking-[0.2em] uppercase opacity-30">role</p>
             <p className="text-xs capitalize">{project.role}</p>
           </div>
 
@@ -112,7 +112,7 @@ export default function Work() {
 
         {/* Bottom — next */}
         <div className="flex flex-col gap-2">
-          <p className="next-label text-[9px] font-mono tracking-[0.2em] uppercase opacity-30">
+          <p className="next-label text-2xs font-mono tracking-[0.2em] uppercase opacity-30">
             next
           </p>
           <Link
@@ -138,7 +138,7 @@ export default function Work() {
         {project.body.length > 0 && (
           <div className="px-8 lg:px-12 py-16 md:py-20 flex flex-col gap-8 max-w-xl">
             {project.body.map((para, i) => (
-              <p key={i} className="body-text text-xs text-secondary/50 leading-relaxed">{para}</p>
+              <p key={i} className="body-text text-sm text-secondary/60 leading-relaxed">{para}</p>
             ))}
 
             {project.link && (
@@ -181,7 +181,7 @@ export default function Work() {
 
         {/* Mobile-only next project */}
         <div className="md:hidden flex items-center justify-between px-6 py-12 border-t border-secondary/10">
-          <span className="text-[9px] font-mono uppercase tracking-widest opacity-30">next</span>
+          <span className="text-2xs font-mono uppercase tracking-widest opacity-30">next</span>
           <Link
             href={`/works/${project.nextProject.slug}`}
             className="flex items-center gap-1 text-xs font-mono font-medium hover:opacity-50 transition-opacity"

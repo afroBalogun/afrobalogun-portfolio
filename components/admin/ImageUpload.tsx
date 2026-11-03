@@ -26,22 +26,22 @@ export function ImageUpload({ label, value, onChange, folder = "portfolio" }: Pr
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-[10px] tracking-widest uppercase opacity-40">{label}</label>
+      <label className="text-2xs tracking-widest uppercase opacity-40">{label}</label>
 
       <div
         onClick={() => inputRef.current?.click()}
-        className="border border-dashed border-neutral-700 h-36 flex items-center justify-center cursor-pointer hover:border-neutral-500 transition-colors relative overflow-hidden"
+        className="border border-dashed border-secondary/25 h-36 flex items-center justify-center cursor-pointer hover:border-secondary/50 transition-colors relative overflow-hidden"
       >
         {value ? (
           <img src={value} alt="" className="w-full h-full object-cover grayscale" />
         ) : (
-          <span className="text-[10px] opacity-30 tracking-widest">
+          <span className="text-2xs opacity-30 tracking-widest">
             {loading ? "uploading..." : "click to upload"}
           </span>
         )}
         {loading && (
-          <div className="absolute inset-0 bg-neutral-900/80 flex items-center justify-center">
-            <span className="text-[10px] tracking-widest opacity-60">uploading...</span>
+          <div className="absolute inset-0 bg-primary/80 flex items-center justify-center">
+            <span className="text-2xs tracking-widest opacity-60">uploading...</span>
           </div>
         )}
       </div>
@@ -50,7 +50,7 @@ export function ImageUpload({ label, value, onChange, folder = "portfolio" }: Pr
         <input
           value={value}
           readOnly
-          className="bg-transparent border border-neutral-800 px-3 py-2 text-[10px] opacity-40 outline-none"
+          className="bg-transparent border border-secondary/15 px-3 py-2 text-2xs opacity-40 outline-none"
         />
       )}
 

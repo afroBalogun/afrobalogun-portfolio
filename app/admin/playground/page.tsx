@@ -89,25 +89,25 @@ export default function Playground() {
       <p className="text-xs tracking-[0.2em] uppercase opacity-40">playground</p>
 
       {/* Add */}
-      <div className="flex flex-col gap-4 max-w-sm border border-neutral-800 p-6">
-        <p className="text-[10px] tracking-widest uppercase opacity-30">add work</p>
+      <div className="flex flex-col gap-4 max-w-sm border border-secondary/15 p-6">
+        <p className="text-2xs tracking-widest uppercase opacity-30">add work</p>
         <ImageUpload label="image" value={img} onChange={setImg} folder="portfolio/playground" />
         <div className="flex flex-col gap-1.5">
-          <label className="text-[10px] tracking-widest uppercase opacity-40">tags (comma separated)</label>
+          <label className="text-2xs tracking-widest uppercase opacity-40">tags (comma separated)</label>
           <input
-            className="bg-transparent border border-neutral-800 px-3 py-2.5 text-xs outline-none focus:border-neutral-500 transition-colors"
+            className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
             value={tags} onChange={e => setTags(e.target.value)}
             placeholder="design, motion, 3d"
           />
-          <label className="text-[10px] tracking-widest uppercase opacity-40">link</label>
+          <label className="text-2xs tracking-widest uppercase opacity-40">link</label>
           <input
-            className="bg-transparent border border-neutral-800 px-3 py-2.5 text-xs outline-none focus:border-neutral-500 transition-colors"
+            className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
             value={link} onChange={e => setLink(e.target.value)}
           />
         </div>
         <button
           onClick={add} disabled={saving || !img}
-          className="border border-neutral-700 px-4 py-2.5 text-[10px] tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-30"
+          className="border border-secondary/25 px-4 py-2.5 text-2xs tracking-widest uppercase hover:bg-secondary/5 transition-colors disabled:opacity-30"
         >
           {saving ? "adding..." : "add"}
         </button>
@@ -118,17 +118,17 @@ export default function Playground() {
         {works.map((w) => (
           <div key={w._id} className="group relative aspect-square">
             <img src={w.img} alt="" className="w-full h-full object-cover grayscale opacity-70" />
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-              <span className="text-[9px] tracking-widest opacity-60">{String(w.index).padStart(2, "0")}</span>
+            <div className="absolute inset-0 bg-primary/85 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+              <span className="text-2xs tracking-widest opacity-60">{String(w.index).padStart(2, "0")}</span>
               <button
                 onClick={() => openEdit(w)}
-                className="text-[9px] tracking-widest hover:opacity-100 opacity-60"
+                className="text-2xs tracking-widest hover:opacity-100 opacity-60"
               >
                 edit
               </button>
               <button
                 onClick={() => remove(w._id)}
-                className="text-[9px] text-red-400/80 tracking-widest hover:text-red-400"
+                className="text-2xs text-red-700/80 tracking-widest hover:text-red-700"
               >
                 remove
               </button>
@@ -141,12 +141,12 @@ export default function Playground() {
       {editing && (
         <div className="fixed inset-0 z-50 flex justify-end">
           {/* backdrop */}
-          <div className="absolute inset-0 bg-black/50" onClick={closeEdit} />
+          <div className="absolute inset-0 bg-secondary/30" onClick={closeEdit} />
 
-          <div className="relative z-10 w-full max-w-sm h-full bg-neutral-950 border-l border-neutral-800 flex flex-col overflow-y-auto">
+          <div className="relative z-10 w-full max-w-sm h-full bg-primary border-l border-secondary/15 flex flex-col overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-800">
-              <p className="text-[10px] tracking-widest uppercase opacity-40">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-secondary/15">
+              <p className="text-2xs tracking-widest uppercase opacity-40">
                 edit — {String(editing.index).padStart(2, "0")}
               </p>
               <button onClick={closeEdit} className="opacity-40 hover:opacity-100 transition-opacity">
@@ -159,28 +159,28 @@ export default function Playground() {
               <ImageUpload label="image" value={editImg} onChange={setEditImg} folder="portfolio/playground" />
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] tracking-widest uppercase opacity-40">tags (comma separated)</label>
+                <label className="text-2xs tracking-widest uppercase opacity-40">tags (comma separated)</label>
                 <input
-                  className="bg-transparent border border-neutral-800 px-3 py-2.5 text-xs outline-none focus:border-neutral-500 transition-colors"
+                  className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
                   value={editTags} onChange={e => setEditTags(e.target.value)}
                   placeholder="design, motion, 3d"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] tracking-widest uppercase opacity-40">link</label>
+                <label className="text-2xs tracking-widest uppercase opacity-40">link</label>
                 <input
-                  className="bg-transparent border border-neutral-800 px-3 py-2.5 text-xs outline-none focus:border-neutral-500 transition-colors"
+                  className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
                   value={editLink} onChange={e => setEditLink(e.target.value)}
                 />
               </div>
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-5 border-t border-neutral-800">
+            <div className="px-6 py-5 border-t border-secondary/15">
               <button
                 onClick={update} disabled={updating || !editImg}
-                className="w-full border border-neutral-700 px-4 py-2.5 text-[10px] tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-30"
+                className="w-full border border-secondary/25 px-4 py-2.5 text-2xs tracking-widest uppercase hover:bg-secondary/5 transition-colors disabled:opacity-30"
               >
                 {updating ? "saving..." : "save changes"}
               </button>

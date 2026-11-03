@@ -67,7 +67,8 @@ export default function Playground() {
 
   useEffect(() => {
     const longestRow = Math.max(...rows.map((r) => r.length), 0)
-    maxScroll.current = -(longestRow * (CARD_W + GAP) - window.innerWidth * 0.66)
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 // card sizes are rem-based
+    maxScroll.current = -(longestRow * (CARD_W + GAP) * rem - window.innerWidth * 0.66)
   }, [rows])
 
   useEffect(() => {
@@ -174,19 +175,19 @@ export default function Playground() {
         style={{ left: "33%", width: "max-content" }}
       >
         {rows.map((row, ri) => (
-          <div key={ri} className="flex items-end" style={{ gap: GAP }}>
+          <div key={ri} className="flex items-end" style={{ gap: `${GAP / 16}rem` }}>
             {row.map((work) => (
               <div
                 key={work._id}
                 className="flex flex-col gap-2 cursor-pointer"
                 onClick={(e) => handleCardClick(e, work)}
               >
-                <span className="text-[9px] tracking-widest text-neutral-400 leading-none pointer-events-none">
+                <span className="text-2xs tracking-widest text-neutral-400 leading-none pointer-events-none">
                   {String(work.index).padStart(2, "0")}
                 </span>
                 <div
                   className="card-inner overflow-hidden bg-neutral-800 hover:bg-neutral-700 transition-colors duration-200"
-                  style={{ width: CARD_W, height: CARD_H, opacity: 0 }}
+                  style={{ width: `${CARD_W / 16}rem`, height: `${CARD_H / 16}rem`, opacity: 0 }}
                 >
                   {work.img && (
                     <img src={work.img} alt="" className="w-full h-full object-cover pointer-events-none" />
@@ -207,7 +208,7 @@ export default function Playground() {
       {staticTags.map((tag) => (
         <span
           key={tag.label}
-          className="absolute text-[9px] tracking-wide text-neutral-400 whitespace-nowrap pointer-events-none"
+          className="absolute text-2xs tracking-wide text-neutral-400 whitespace-nowrap pointer-events-none"
           style={{ left: tag.left, top: tag.top }}
         >
           {tag.label}
@@ -234,12 +235,12 @@ export default function Playground() {
                 {/* tags */}
                 {selected.tags?.length > 0 && (
                   <div className="flex flex-col gap-1.5">
-                    <p className="text-[9px] tracking-[0.2em] uppercase text-neutral-600">tags</p>
+                    <p className="text-2xs tracking-[0.2em] uppercase text-neutral-600">tags</p>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {selected.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="text-[9px] tracking-widest uppercase border border-neutral-700 px-2 py-1 text-neutral-400"
+                          className="text-2xs tracking-widest uppercase border border-neutral-700 px-2 py-1 text-neutral-400"
                         >
                           {tag}
                         </span>
@@ -256,7 +257,7 @@ export default function Playground() {
                     href={selected.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-2 text-[10px] tracking-[0.2em] uppercase text-secondary hover:text-secondary/60 transition-colors w-fit"
+                    className="group flex items-center gap-2 text-2xs tracking-[0.2em] uppercase text-secondary hover:text-secondary/60 transition-colors w-fit"
                   >
                     <span className="underline underline-offset-4">visit</span>
                     <span className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
@@ -266,7 +267,7 @@ export default function Playground() {
                 {/* close */}
                 <button
                   onClick={handleClose}
-                  className="text-[9px] tracking-[0.2em] uppercase text-neutral-600 hover:text-neutral-300 transition-colors text-left"
+                  className="text-2xs tracking-[0.2em] uppercase text-neutral-600 hover:text-neutral-300 transition-colors text-left"
                 >
                   close
                 </button>

@@ -21,9 +21,9 @@ export function AdminNav() {
   }
 
   return (
-    <aside className="w-52 border-r border-neutral-800 flex flex-col justify-between py-10 px-6 shrink-0">
+    <aside className="w-52 border-r border-secondary/15 flex flex-col justify-between py-10 px-6 shrink-0">
       <div className="flex flex-col gap-8">
-        <p className="text-[10px] tracking-[0.2em] uppercase opacity-30">afroBalogun</p>
+        <p className="font-mono text-sm font-semibold">(/afroBalogun)</p>
         <nav className="flex flex-col gap-3">
           {nav.map(({ label, href }) => (
             <Link
@@ -40,7 +40,7 @@ export function AdminNav() {
       </div>
       <button
         onClick={logout}
-        className="text-[10px] tracking-widest uppercase opacity-20 hover:opacity-60 text-left transition-opacity"
+        className="text-2xs tracking-widest uppercase opacity-20 hover:opacity-60 text-left transition-opacity"
       >
         logout
       </button>

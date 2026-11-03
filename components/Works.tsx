@@ -113,7 +113,7 @@ export default function Works() {
                   />
                   <div className="card-mask absolute inset-0 z-10 bg-neutral-300" style={{ transformOrigin: "top center" }} />
                   <div className="absolute inset-0 z-20 flex flex-col justify-end p-3 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                    <p className="card-meta text-[9px] font-mono uppercase tracking-widest opacity-60 mb-1">{project.role}</p>
+                    <p className="card-meta text-2xs font-mono uppercase tracking-widest opacity-60 mb-1">{project.role}</p>
                     <p className="card-meta text-xs font-mono font-medium leading-snug">{project.title}</p>
                   </div>
                 </article>

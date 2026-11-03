@@ -110,8 +110,8 @@ export default function Contact() {
 
           {/* label */}
           <div ref={labelRef} className="col-start-1 row-start-1 flex flex-col gap-1">
-            <p className="text-[9px] tracking-[0.2em] opacity-40 uppercase">(contact)</p>
-            <p className="text-[9px] tracking-wide opacity-25 mt-2">— available for work</p>
+            <p className="text-2xs tracking-[0.2em] opacity-40 uppercase">(contact)</p>
+            <p className="text-2xs tracking-wide opacity-25 mt-2">— available for work</p>
           </div>
 
           {/* links */}
@@ -124,7 +124,7 @@ export default function Contact() {
               onMouseLeave={() => handleMouseLeave(i)}
               style={{ willChange: "transform" }}
             >
-              <span className="text-[8px] tracking-widest opacity-30 leading-none">
+              <span className="text-2xs tracking-widest opacity-30 leading-none">
                 — {c.id}
               </span>
               <Link
@@ -139,10 +139,10 @@ export default function Contact() {
 
         {/* bottom bar */}
         <div className="relative mt-16 pt-5 border-t border-current/10 flex justify-between items-end">
-          <span className="text-[8px] tracking-widest opacity-20">
+          <span className="text-2xs tracking-widest opacity-20">
             © {new Date().getFullYear()}
           </span>
-          <span className="text-[8px] tracking-widest opacity-20">
+          <span className="text-2xs tracking-widest opacity-20">
             afroBalogun
           </span>
         </div>

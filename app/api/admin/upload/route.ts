@@ -13,6 +13,7 @@ export async function POST(req: Request) {
   const folder = (formData.get("folder") as string) || "portfolio"
 
   if (!file) return NextResponse.json({ error: "No file" }, { status: 400 })
+  if (!file.type.startsWith("image/")) return NextResponse.json({ error: "Images only" }, { status: 400 })
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
