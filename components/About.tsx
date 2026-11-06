@@ -370,7 +370,7 @@ export default function About() {
 
           <figure className="md:col-start-9 md:col-span-4 md:row-start-1 md:row-span-2 max-md:w-3/4 max-md:self-end max-md:ml-auto">
             <div className="bg-photo relative rotate-2 shadow-[0_1rem_2rem_-1rem_rgb(0_0_0/0.35)]">
-              <img src="/steve.jpg" alt="Steve Jobs poster: Let's go invent tomorrow instead of worrying about what happened yesterday" className="w-full aspect-4/5 object-cover grayscale" />
+              <img src="/steve.jpg" alt="Steve Jobs poster: Let's go invent tomorrow instead of worrying about what happened yesterday" className="w-full aspect-4/5 object-cover" />
               {/* tape strips */}
               <span aria-hidden className="absolute -top-3 left-6 w-20 h-6 -rotate-6 bg-white/60" />
               <span aria-hidden className="absolute -top-3 right-6 w-20 h-6 rotate-3 bg-white/60" />
@@ -421,7 +421,7 @@ export default function About() {
               key={item.title}
               src={item.img}
               alt=""
-              className={`absolute inset-0 w-full h-full object-cover grayscale transition-opacity duration-300 ${hoverExp === i ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${hoverExp === i ? "opacity-100" : "opacity-0"}`}
             />
           ))}
         </div>
@@ -445,7 +445,7 @@ export default function About() {
           <NumberedHeading n={3}>TOOLS</NumberedHeading>
           <div className="flex flex-col sm:flex-row gap-4 sm:items-start">
             <div className="flex-1"><ToolList tools={TOOLS} /></div>
-            {/* pixel art: pixelated scaling keeps its hard edges; no grayscale so the green power light shows */}
+            {/* pixel art: pixelated scaling keeps its hard edges */}
             <img src="/stack-computer.png" alt="Pixel-art desktop computer" className="stack-photo w-40 sm:w-44 aspect-4/3 object-cover [image-rendering:pixelated] self-end sm:self-start mt-3 mr-6 sm:mr-0" />
           </div>
         </div>

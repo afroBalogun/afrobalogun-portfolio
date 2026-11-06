@@ -114,7 +114,7 @@ export default function Works() {
                   <img
                     src={project.coverImg}
                     alt={project.title}
-                    className="absolute inset-0 w-full h-full object-cover grayscale transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                   <div className="card-mask absolute inset-0 z-10 bg-neutral-300" style={{ transformOrigin: "top center" }} />
                   <div className="absolute inset-0 z-20 flex flex-col justify-end p-3 bg-linear-to-t from-black/60 to-transparent text-primary opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity duration-400">

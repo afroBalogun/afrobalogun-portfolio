@@ -75,18 +75,18 @@ export default function Work() {
   const bodyB = body.slice(half)
 
   return (
-    <main ref={mainRef} className="min-h-screen px-4 sm:px-6 lg:px-12 pt-28 pb-16 flex flex-col gap-16 font-serif">
+    <main ref={mainRef} className="min-h-screen px-4 sm:px-6 lg:px-12 pt-28 pb-16 flex flex-col gap-16 font-mono">
 
       {/* ── Spread 1 (pp. 01–02): meta + standfirst column, cover across the fold, body in columns ── */}
       {/* the spread is an 8-column grid: columns 1–4 are the left page, 5–8 the right; the line is the fold */}
       <section className="relative grid grid-cols-1 md:grid-cols-8 gap-x-6 gap-y-10 md:before:absolute md:before:inset-y-0 md:before:left-1/2 md:before:w-px md:before:bg-secondary/15">
-        <div className="spread-text md:col-span-2 flex flex-col gap-5 text-sm leading-snug">
+        <div className="spread-text md:col-span-2 flex flex-col gap-5 text-xs leading-relaxed">
           <p className="font-mono text-2xs uppercase tracking-widest opacity-60">{project.year} · {project.role} · {project.client}</p>
-          <p className="text-justify hyphens-auto">{project.description}</p>
+          <p>{project.description}</p>
         </div>
         <Photo src={project.coverImg} alt={project.title} className="md:col-span-6 aspect-16/10" />
 
-        <div className="spread-text md:col-span-8 columns-1 sm:columns-2 md:columns-4 gap-6 text-[0.8rem] leading-snug text-justify hyphens-auto">
+        <div className="spread-text md:col-span-8 columns-1 sm:columns-2 md:columns-4 gap-6 text-xs leading-relaxed">
           {bodyA.map((para, i) => <p key={i} className="mb-3 break-inside-avoid-column">{para}</p>)}
         </div>
         <Folio left={1} right={2} />
@@ -96,7 +96,7 @@ export default function Work() {
       <section className="relative grid grid-cols-1 md:grid-cols-8 gap-x-6 gap-y-10 md:before:absolute md:before:inset-y-0 md:before:left-1/2 md:before:w-px md:before:bg-secondary/15">
         <div className="spread-text md:col-span-4 md:pr-8 flex flex-col items-center gap-4 text-center self-center">
           <h1 className="font-bold uppercase leading-tight text-2xl sm:text-3xl">{project.title}</h1>
-          <p className="italic text-sm leading-snug max-w-md">{project.description}</p>
+          <p className="text-xs leading-relaxed max-w-md opacity-70">{project.description}</p>
         </div>
         {wide && <Photo src={wide} className="md:col-span-4 aspect-16/10" />}
 
@@ -113,7 +113,7 @@ export default function Work() {
           </div>
         )}
         {bodyB.length > 0 && (
-          <div className="spread-text md:col-start-5 md:col-span-4 columns-1 sm:columns-2 gap-6 text-[0.8rem] leading-snug text-justify hyphens-auto self-start">
+          <div className="spread-text md:col-start-5 md:col-span-4 columns-1 sm:columns-2 gap-6 text-xs leading-relaxed self-start">
             {bodyB.map((para, i) => <p key={i} className="mb-3 break-inside-avoid-column">{para}</p>)}
           </div>
         )}
