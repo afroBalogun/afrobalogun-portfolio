@@ -16,6 +16,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [radius, setRadius] = useState(180);
+  const [scrolled, setScrolled] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
   const pathname = usePathname()
@@ -45,11 +46,24 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', updateRadius);
   }, []);
 
+  // once the page scrolls, a backdrop sits behind the menu so content stops running through the links
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [pathname]);
+
 
   const adminpathname = usePathname().includes("admin")
 
   return (
     <nav className={`${adminpathname ? "hidden" : ""}`} ref={navRef}>
+      {/* Scroll backdrop: separate from <menu> so the menu's mix-blend-difference text still blends over it */}
+      <div
+        aria-hidden
+        className={`fixed top-0 inset-x-0 z-50 h-16 md:h-24 bg-primary/85 backdrop-blur-md pointer-events-none transition-opacity duration-300 ${scrolled ? 'opacity-100' : 'opacity-0'}`}
+      />
       {/* Floating menu trigger - bottom right corner */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}

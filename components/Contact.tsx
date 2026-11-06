@@ -5,10 +5,11 @@ import { useRef, useLayoutEffect } from "react"
 import gsap from "gsap"
 
 const contacts = [
-  { id: "01", label: "obam771@gmail.com", href: "mailto:obam771@gmail.com", col: "col-start-1", row: "row-start-2" },
+  { id: "01", label: "temiruto14@gmail.com", href: "mailto:temiruto14@gmail.com", col: "col-start-1", row: "row-start-2" },
   { id: "02", label: "LinkedIn",              href: "https://www.linkedin.com/in/temiloluwa-obasa-786b7817b/", col: "md:col-start-2", row: "row-start-3 md:row-start-2" },
   { id: "03", label: "+234 706 967 5136",     href: "tel:+2347069675136",           col: "md:col-start-3", row: "row-start-4 md:row-start-3" },
   { id: "04", label: "github",                href: "https://github.com/afroBalogun",           col: "md:col-start-2", row: "row-start-5 md:row-start-4" },
+  { id: "05", label: "résumé (pdf)",          href: "/Obasa-Temiloluwa-Resume.pdf",            col: "md:col-start-3", row: "row-start-6 md:row-start-4", file: true },
 ]
 
 export default function Contact() {
@@ -127,12 +128,24 @@ export default function Contact() {
               <span className="text-2xs tracking-widest opacity-30 leading-none">
                 — {c.id}
               </span>
-              <Link
-                href={c.href}
-                className="text-sm md:text-base underline underline-offset-4 opacity-70 hover:opacity-100 transition-opacity duration-200"
-              >
-                {c.label}
-              </Link>
+              {"file" in c ? (
+                // static file: plain <a> (Next's <Link> would try to route it), opened in a new tab
+                <a
+                  href={c.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm md:text-base underline underline-offset-4 opacity-70 hover:opacity-100 transition-opacity duration-200"
+                >
+                  {c.label}
+                </a>
+              ) : (
+                <Link
+                  href={c.href}
+                  className="text-sm md:text-base underline underline-offset-4 opacity-70 hover:opacity-100 transition-opacity duration-200"
+                >
+                  {c.label}
+                </Link>
+              )}
             </div>
           ))}
         </div>

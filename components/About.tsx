@@ -3,9 +3,84 @@ import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
 import { ScrollTrigger, SplitText } from "gsap/all"
 import { useRef, useState } from "react"
-import { PiPlus } from "react-icons/pi"
+import { Courier_Prime } from "next/font/google"
 
 gsap.registerPlugin(useGSAP, SplitText, ScrollTrigger)
+
+// hobby showcase: where each cover lands when its category is hovered (centre point, % of the section) and its tilt;
+// slots ring the card cluster so the covers frame it instead of covering it
+const SHOWCASE_SLOTS = [
+  { x: 12, y: 22, r: -6 }, { x: 88, y: 22, r: 5 }, { x: 8, y: 68, r: 4 },
+  { x: 92, y: 66, r: -5 }, { x: 30, y: 88, r: 3 }, { x: 70, y: 88, r: -3 },
+]
+
+// pointer type of the latest press, so a click can tell a touch tap from a mouse click
+let lastPointerType = "mouse"
+
+// typewriter face for the stack section only
+const courier = Courier_Prime({ weight: ["400", "700"], subsets: ["latin"] })
+
+// ——— typewritten-document pieces for the stack section ———
+// hand-drawn strokes are visible by default; the scroll animation draws them in (pathLength=1 makes the dash math 0..1)
+const strokeProps = { className: "stack-stroke", fill: "none", stroke: "currentColor", strokeWidth: 1.2, strokeLinecap: "round" as const, pathLength: 1, strokeDasharray: "1", vectorEffect: "non-scaling-stroke" as const }
+
+function Scribble() {
+  return (
+    <svg aria-hidden viewBox="0 0 240 10" preserveAspectRatio="none" className="absolute left-0 -bottom-1.5 w-full h-2 overflow-visible">
+      <path d="M2 6 C 40 2, 80 9, 120 5 S 200 7, 238 3" {...strokeProps} />
+    </svg>
+  )
+}
+
+const FRONTEND = ["React.js", "Next.js", "Tailwind CSS", "GSAP", "React Native", "CSS3"]
+const BACKEND = ["Node.js", "Express.js", "MongoDB", "PostgreSQL", "Spring Boot"]
+const TOOLS = ["Figma", "Framer", "Git", "Vercel", "Linux", "REST APIs", "AWS"]
+
+// ——— poster backdrop for the stack: faint grid and a giant wordmark ———
+function StackPoster() {
+  return (
+    <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none select-none">
+      {/* poster grid */}
+      <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:12.5%_16.666%]" />
+      {/* giant wordmark */}
+      <p className="absolute inset-x-0 bottom-[12%] text-center font-inter font-semibold uppercase leading-none tracking-tight text-[22vw] opacity-[0.05]">stack</p>
+    </div>
+  )
+}
+
+// redacted phrase for the background "case file": an ink-coloured background behind ink-coloured text reads as a
+// black bar; GSAP shrinks the background to reveal the words. box-decoration-break gives each wrapped line its own bar.
+function Redact({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="bg-redact px-1 -mx-1 [box-decoration-break:clone] bg-no-repeat bg-left bg-[length:100%_100%] bg-[linear-gradient(var(--color-secondary),var(--color-secondary))] motion-reduce:bg-none">
+      {children}
+    </span>
+  )
+}
+
+function NumberedHeading({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <p className="stack-line grid grid-cols-[1.5rem_1fr] sm:grid-cols-[3rem_1fr] mt-10 font-bold">
+      <span>{n}</span>
+      <span>{children}</span>
+    </p>
+  )
+}
+
+function ToolList({ tools, bracket }: { tools: string[]; bracket?: boolean }) {
+  return (
+    <div className="relative mt-3 px-10 sm:pl-24 sm:pr-16">
+      {bracket && (
+        <svg aria-hidden viewBox="0 0 8 100" preserveAspectRatio="none" className="absolute left-5 sm:left-16 top-0 w-2 h-full overflow-visible">
+          <path d="M6 2 C 2 25, 7 55, 3 98" {...strokeProps} />
+        </svg>
+      )}
+      <ul className="grid grid-cols-2 gap-x-6 gap-y-1">
+        {tools.map((tool) => <li key={tool} className="stack-line">{tool}</li>)}
+      </ul>
+    </div>
+  )
+}
 
 
 
@@ -25,56 +100,36 @@ export default function About() {
     }
   ]
 
+  // expertise index: big titles; each row's own image follows the cursor on hover
   const expertise = [
-    {
-      title: "Creative Strategy & Design",
-      description: "Before a single line of code is written, I explore the visual narrative. I design interfaces that are not just 'minimal' but intentional, ensuring every element has a reason to exist."
-    },
-    {
-      title: "Technical Architecture",
-      description: "I leverage a modern stack to build digital environments that are high-performance, scalable, and structurally robust."
-    },
-    {
-      title: "Interactive Experiences",
-      description: "This is where the art meets the engine. I focus on the micro-interactions and subtle details that leave a lasting impression on the user."
-    }
+    { title: "Design", img: "/expertise-design.jpg", description: "I start with the story, not the screen. Layout, type and pacing are decided before a line of code, so every element has a job." },
+    { title: "Engineering", img: "/expertise-engineering.jpg", description: "Typed, tested and fast. Next.js and Node on both ends, built to load quickly and stay easy to change." },
+    { title: "Motion", img: "/expertise-motion.jpg", description: "The last layer: transitions, micro-interactions and scroll moments that make a site feel alive without getting in its way." },
   ]
+  const [hoverExp, setHoverExp] = useState<number | null>(null)
+  // the trailing photo belongs to a hovering mouse/pen only; keyboard focus reveals the text without it
+  const [expPointer, setExpPointer] = useState(false)
+  const expCursorRef = useRef<HTMLDivElement>(null)
+  // the floating photo trails the pointer (mouse/pen only; it is hidden for touch)
+  const moveExpCursor = (e: React.PointerEvent) => {
+    gsap.to(expCursorRef.current, { x: e.clientX, y: e.clientY, duration: 0.45, ease: "power3.out", overwrite: "auto" })
+  }
 
   const [hoveredHobby, setHoveredHobby] = useState<string | null>(null)
-  const [activeStackCol, setActiveStackCol] = useState<number | null>(null)
 
-  const stackCollages = [
-    {
-      images: [
-        { src: "/logos/react.png", x: 8, y: 12, w: 80, rotate: -3, delay: 0 },
-        { src: "/logos/nextjs.png", x: 22, y: 45, w: 70, rotate: 4, delay: 60 },
-        { src: "/logos/tailwind.png", x: 62, y: 18, w: 75, rotate: -5, delay: 90 },
-        { src: "/logos/gsap.png", x: 76, y: 52, w: 65, rotate: 3, delay: 130 },
-        { src: "/logos/rn.png", x: 40, y: 62, w: 72, rotate: -2, delay: 50 },
-      ],
-      labels: ["REACT.JS", "NEXT.JS", "TAILWIND CSS", "GSAP", "REACT NATIVE", "CSS3"],
-    },
-    {
-      images: [
-        { src: "/logos/node.png", x: 10, y: 20, w: 85, rotate: -4, delay: 0 },
-        { src: "/logos/express.png", x: 55, y: 10, w: 75, rotate: 3, delay: 70 },
-        { src: "/logos/mongo.png", x: 30, y: 48, w: 90, rotate: -2, delay: 110 },
-        { src: "/logos/postgres.png", x: 68, y: 38, w: 78, rotate: 5, delay: 80 },
-        { src: "/logos/spring.png", x: 20, y: 68, w: 68, rotate: 2, delay: 150 },
-      ],
-      labels: ["NODE.JS", "EXPRESS.JS", "MONGODB", "POSTGRESQL", "SPRING BOOT"],
-    },
-    {
-      images: [
-        { src: "/logos/figma.png", x: 12, y: 15, w: 80, rotate: -3, delay: 0 },
-        { src: "/logos/framer.png", x: 58, y: 8, w: 72, rotate: 4, delay: 60 },
-        { src: "/logos/git.png", x: 32, y: 45, w: 85, rotate: -1, delay: 100 },
-        { src: "/logos/vercel.png", x: 70, y: 40, w: 70, rotate: 5, delay: 80 },
-        { src: "/logos/linux.png", x: 45, y: 65, w: 75, rotate: -4, delay: 140 },
-      ],
-      labels: ["FIGMA", "FRAMER", "GIT", "VERCEL", "LINUX", "REST APIs"],
-    },
-  ]
+  // hobby collages: hover with a mouse, tap to toggle on touch, show on keyboard focus
+  const hobbyProps = (key: string) => ({
+    tabIndex: 0,
+    role: "button" as const,
+    "aria-expanded": hoveredHobby === key,
+    onPointerDown: (e: React.PointerEvent) => { lastPointerType = e.pointerType },
+    onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType === "mouse") setHoveredHobby(key) },
+    onPointerLeave: (e: React.PointerEvent) => { if (e.pointerType === "mouse") setHoveredHobby(null) },
+    onClick: () => { if (lastPointerType !== "mouse") setHoveredHobby((h) => (h === key ? null : key)) },
+    // a tap also focuses the card; only keyboard focus (:focus-visible) should open it, or the tap would toggle it shut
+    onFocus: (e: React.FocusEvent<HTMLElement>) => { if (e.currentTarget.matches(":focus-visible")) setHoveredHobby(key) },
+    onBlur: () => setHoveredHobby(null),
+  })
 
   const hobbyCollages: Record<string, {
     title: string
@@ -99,7 +154,7 @@ export default function About() {
         { text: "KANYE WEST", x: 91, y: 36, delay: 30 },
         { text: "OBONGJAYAR", x: 48, y: 63, delay: 170 },
         { text: "ERYKAH BADU", x: 63, y: 63, delay: 130 },
-        { text: "TYLER THE CREATOR", x: 77, y: 63, delay: 190 },
+        { text: "TYLER, THE CREATOR", x: 77, y: 63, delay: 190 },
       ],
     },
     reading: {
@@ -115,7 +170,7 @@ export default function About() {
         // { src: "/reading/8.jpg", x: 38, y: 22, w: 92, rotate: -2, delay: 160 },
       ],
       labels: [
-        { text: "CHIMAMANDA", x: 32, y: 10, delay: 60 },
+        { text: "ADICHIE", x: 32, y: 10, delay: 60 },
         { text: "MURAKAMI", x: 43, y: 36, delay: 40 },
         { text: "ACHEBE", x: 57, y: 36, delay: 120 },
         { text: "ORWELL", x: 72, y: 36, delay: 80 },
@@ -140,8 +195,8 @@ export default function About() {
         { text: "BERSERK", x: 32, y: 10, delay: 60 },
         { text: "BLUE LOCK", x: 20, y: 36, delay: 90 },
         { text: "FRIEREN", x: 43, y: 36, delay: 40 },
-        { text: "JUJUTSU", x: 57, y: 36, delay: 120 },
-        { text: "ONE-PIECE", x: 91, y: 36, delay: 30 },
+        { text: "JUJUTSU KAISEN", x: 57, y: 36, delay: 120 },
+        { text: "ONE PIECE", x: 91, y: 36, delay: 30 },
         { text: "ONE PUNCH MAN", x: 30, y: 63, delay: 200 },
         { text: "NARUTO", x: 48, y: 63, delay: 170 },
         { text: "HAIKYUU", x: 63, y: 63, delay: 130 },
@@ -152,17 +207,13 @@ export default function About() {
   const backgroundRef = useRef<HTMLParagraphElement>(null)
   const expertiseRef = useRef<HTMLElement>(null)
   const aboutRef = useRef<HTMLDivElement>(null)
-  const mask1Ref = useRef<HTMLDivElement>(null)
-  const itemsRef = useRef<HTMLDivElement>(null)
-  const filmRef = useRef<HTMLDivElement>(null)
-  const sectionRef = useRef<HTMLElement>(null)
+  const sectionRef = useRef<HTMLDivElement>(null)
   const stackRef = useRef<HTMLElement>(null)
   const hobbiesRef = useRef<HTMLElement>(null)
-  const cardsRef = useRef<HTMLDivElement>(null)
-
   const h1Ref = useRef<HTMLDivElement>(null)
   const h2Ref = useRef<HTMLDivElement>(null)
   const h3Ref = useRef<HTMLDivElement>(null)
+
   const footerRef = useRef<HTMLElement>(null)
   const treeMaskRef = useRef<HTMLDivElement>(null)
 
@@ -173,49 +224,52 @@ export default function About() {
     // — ALL DEVICES: Core Reveals & Layout Animations  —
     // ——————————————————————————————————————————————————
 
-    // Mask Reveals
-    gsap.to(mask1Ref.current, {
-      scaleX: 0,
-      duration: 1.1,
-      ease: "power4.inOut",
-      transformOrigin: "right center",
-      scrollTrigger: { trigger: mask1Ref.current, start: "top 80%" },
+    // Background case file: redaction bars peel off one by one, the exhibit photo is taped in
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      gsap.to(".bg-redact", {
+        backgroundSize: "0% 100%", duration: 0.6, ease: "power2.inOut", stagger: 0.35, delay: 0.6,
+        scrollTrigger: { trigger: backgroundRef.current, start: "top 85%" },
+      });
+    }
+    gsap.from(".bg-photo", {
+      opacity: 0, y: 30, rotate: -6, duration: 1, ease: "power3.out",
+      scrollTrigger: { trigger: ".bg-photo", start: "top 90%" },
     });
 
-    gsap.from(filmRef.current, {
-      x: "-100%",
-      duration: 1.2,
-      ease: "power4.out",
-      scrollTrigger: { trigger: sectionRef.current, start: "25% 75%" },
+    // Expertise: index rows rise in one after another
+    gsap.from(".exp-row", {
+      opacity: 0, y: 40, duration: 0.9, ease: "power3.out", stagger: 0.15,
+      scrollTrigger: { trigger: expertiseRef.current, start: "top 75%" },
     });
 
-    // Stack Scroll Animation (Pinned)
-    const cols = gsap.utils.toArray<HTMLElement>(".stack-col");
-    gsap.set(cols, { opacity: 0.15, scale: 0.92 });
+    // the journal blocks under the statement fade up one after another
+    gsap.from(sectionRef.current!.querySelectorAll(".me-reveal"), {
+      opacity: 0, y: 20, duration: 0.8, ease: "power3.out", stagger: 0.12,
+      scrollTrigger: { trigger: sectionRef.current, start: "top 70%" },
+    });
 
-    gsap.timeline({
-      scrollTrigger: {
-        trigger: stackRef.current,
-        start: "top top",
-        end: "+=500",
-        pin: true,
-        scrub: 0.3,
-        onUpdate: (self) => {
-          const p = self.progress;
-          if (p < 0.02) setActiveStackCol(null);
-          else if (p < 0.38) setActiveStackCol(0);
-          else if (p < 0.65) setActiveStackCol(1);
-          else setActiveStackCol(2);
-        },
-        onLeaveBack: () => setActiveStackCol(null),
-        onLeave: () => setActiveStackCol(null),
-      },
-    })
-      .to(cols[0], { opacity: 1, scale: 1, duration: 0.4 })
-      .to(cols[0], { opacity: 0.15, scale: 0.92, duration: 0.4 })
-      .to(cols[1], { opacity: 1, scale: 1, duration: 0.4 }, "<")
-      .to(cols[1], { opacity: 0.15, scale: 0.92, duration: 0.4 })
-      .to(cols[2], { opacity: 1, scale: 1, duration: 0.4 }, "<");
+    // Stack: the list types itself out as you scroll; hand-drawn strokes draw in as they arrive
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      // words,chars (not chars alone): each word stays an unbreakable unit, so lines never wrap mid-word
+      const script = new SplitText(".stack-line", { type: "words,chars" });
+      gsap.from(script.chars, {
+        opacity: 0,
+        duration: 0.01,
+        stagger: 0.02,
+        ease: "none",
+        scrollTrigger: { trigger: stackRef.current, start: "top 75%", end: "bottom 85%", scrub: true },
+      });
+      gsap.utils.toArray<SVGPathElement>(".stack-stroke").forEach((path) => {
+        gsap.fromTo(path, { strokeDashoffset: 1 }, {
+          strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut",
+          scrollTrigger: { trigger: path.closest("svg"), start: "top 65%" },
+        });
+      });
+      gsap.from(".stack-photo", {
+        opacity: 0, y: 12, duration: 1, ease: "power3.out",
+        scrollTrigger: { trigger: ".stack-photo", start: "top 75%" },
+      });
+    }
 
     // Hobbies Reveal
     gsap.from(
@@ -259,134 +313,6 @@ export default function About() {
     // ——————————————————————————————————————————————————
     mm.add("(min-width: 768px)", () => {
 
-      // Background SplitText
-      if (backgroundRef.current) {
-        const split = new SplitText(backgroundRef.current, { type: "lines" });
-        gsap.from(split.lines, {
-          opacity: 0,
-          y: 28,
-          duration: 1,
-          ease: "power3.out",
-          stagger: 0.12,
-          scrollTrigger: { trigger: backgroundRef.current, start: "top 80%" },
-        });
-      }
-
-      // Shape/Stack SplitText
-      const shape = new SplitText(".shape", { type: "chars" });
-      gsap.from(shape.chars, {
-        opacity: 0,
-        y: 2,
-        duration: 0.1,
-        ease: "power3.out",
-        stagger: 0.05,
-        scrollTrigger: { trigger: backgroundRef.current, start: "bottom center" },
-      });
-
-      const stack = new SplitText(".stack", { type: "chars" });
-      gsap.from(stack.chars, {
-        opacity: 0,
-        y: 2,
-        duration: 0.5,
-        ease: "power3.out",
-        stagger: 0.05,
-        scrollTrigger: { trigger: stackRef.current, start: "center 80%" },
-      });
-
-      // Me-Items Staggered Loop
-      itemsRef.current?.querySelectorAll(".me-item").forEach((item, i) => {
-        const header = item.querySelector(".me-header");
-        const desc = item.querySelector(".me-desc");
-        const icon = item.querySelector(".me-icon");
-
-        gsap.from(icon, {
-          rotate: -90,
-          opacity: 0,
-          duration: 0.5,
-          ease: "back.out(2)",
-          scrollTrigger: { trigger: item, start: "top 82%" },
-          delay: i * 0.08,
-        });
-        gsap.from(header, {
-          opacity: 0,
-          x: 24,
-          duration: 0.7,
-          ease: "power3.out",
-          scrollTrigger: { trigger: item, start: "top 82%" },
-          delay: i * 0.08,
-        });
-        if (desc) {
-          const split = new SplitText(desc, { type: "words" });
-          gsap.from(split.words, {
-            opacity: 0,
-            y: 10,
-            duration: 0.6,
-            ease: "power2.out",
-            stagger: 0.025,
-            scrollTrigger: { trigger: item, start: "top 80%" },
-            delay: 0.2 + i * 0.08,
-          });
-        }
-      });
-
-      // About Character Scatter
-      const aboutDirs = [
-        { x: -60, y: -40 }, { x: 0, y: -80 }, { x: 60, y: -40 },
-        { x: 80, y: 0 }, { x: 40, y: 60 },
-      ];
-      const about = new SplitText(".about", { type: "chars" });
-      gsap.from(about.chars, {
-        opacity: 0,
-        x: (i: number) => aboutDirs[i % aboutDirs.length].x,
-        y: (i: number) => aboutDirs[i % aboutDirs.length].y,
-        rotate: (i: number) => (i % 2 === 0 ? -18 : 18),
-        duration: 1,
-        ease: "back.out(1.4)",
-        stagger: 0.08,
-        scrollTrigger: { trigger: ".about", start: "top 85%" },
-      });
-
-      // Expertise Parallax & ClipPath
-      const article = expertiseRef.current!.querySelector("article");
-      gsap.from(article, {
-        clipPath: "inset(100% 0% 0% 0%)",
-        duration: 1.4,
-        ease: "power4.inOut",
-        scrollTrigger: { trigger: expertiseRef.current, start: "top 80%" },
-      });
-      gsap.to(article, {
-        y: 0,
-        ease: "none",
-        scrollTrigger: {
-          trigger: article,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 1.5,
-        },
-      });
-
-      // Card Blur & Reveal
-      cardsRef.current?.querySelectorAll(".card").forEach((card, i) => {
-        const title = card.querySelector("h6");
-        const desc = card.querySelector("p");
-        const tl = gsap.timeline({
-          scrollTrigger: { trigger: card, start: "top 85%" },
-          delay: i * 0.15,
-        });
-        tl.from(title, { opacity: 0, y: 16, duration: 0.6, ease: "power3.out" });
-        if (desc) {
-          const split = new SplitText(desc, { type: "words" });
-          tl.from(split.words, {
-            opacity: 0,
-            y: 8,
-            filter: "blur(4px)",
-            duration: 0.5,
-            ease: "power2.out",
-            stagger: 0.02,
-          }, "-=0.1");
-        }
-      });
-
       // Name SplitText
       const ttl = gsap.timeline({
         scrollTrigger: { trigger: ".name", start: "top 80%" },
@@ -425,236 +351,157 @@ export default function About() {
       ref={aboutRef}
     >
 
-      {/* Background */}
-      <section className="relative h-[80vh] flex flex-col md:flex-row justify-between">
-        <div className="flex flex-col justify-between pt-50 font-light">
-          <p className="text-xs">(Background)</p>
-          <p
-            ref={backgroundRef}
-            className="md:absolute max-w-100 text-xl md:text-2xl lg:text-3xl font-light leading-snug mt-20 md:ml-20 lg:ml-40 max-md:mb-5 z-30 text-white mix-blend-difference"
-          >
-            With over 3 years in the creative and development space, I specialize in building interactive web experiences that blend design, motion, and purposeful simplicity into work that feels both engaging and intentional.
+      {/* Background — redacted statement, a taped-in exhibit, and the journal notes (what I do / origin / approach) */}
+      {/* overflow-x-clip: the tilted exhibit photo pokes ~1px past the edge on phones */}
+      <section className="relative overflow-x-clip pt-28 md:pt-36 pb-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-14 items-start">
+          <p ref={backgroundRef} className="md:col-span-7 md:row-start-1 text-2xl md:text-3xl lg:text-4xl font-light leading-snug">
+            For <Redact>3+ years</Redact> I&apos;ve worked between <Redact>design and code.</Redact> Building <Redact>interactive websites</Redact> where <Redact>motion has a purpose</Redact> and <Redact>nothing is there by accident</Redact>.
           </p>
-        </div>
-        <div className="flex flex-col justify-around items-end gap-20">
-          <article
-            className="h-60 md:h-125 w-60 md:w-125 relative flex justify-center py-10 bg-cover bg-center grayscale"
-            style={{ backgroundImage: "url('/steve.jpg')" }}
-          >
-            <div
-              ref={mask1Ref}
-              className="absolute z-10 inset-0 bg-white dark:bg-black"
-              style={{ transformOrigin: "right center" }}
-            />
-            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-end p-6">
-              <p className="text-2xs sm:text-xs font-extralight uppercase md:w-65 max-md:w-56 text-[#C1C1C1]">
-                "Design is not just what it looks like and feels like. Design is how it works."<br />
-                <span className="font-semibold">— Steve Jobs</span>
-              </p>
+
+          {/* journal notes: two staggered mono columns under the statement */}
+          <div ref={sectionRef} className="md:col-span-7 md:row-start-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 font-mono text-xs sm:text-[0.8rem] leading-relaxed">
+            <div className="flex flex-col gap-5">
+              <p className="me-reveal"><span className="font-bold">{me[0].title}.</span> {me[0].description}</p>
+              <p className="me-reveal"><span className="font-bold">{me[1].title}.</span> {me[1].description}</p>
             </div>
-          </article>
-          <p className="font-light w-25 md:w-30 text-2xs md:text-sm mr-20 shape">
-            shaping ideas into refined, immersive digital experiences.
-          </p>
+            <p className="me-reveal sm:mt-24"><span className="font-bold">{me[2].title}.</span> {me[2].description}</p>
+          </div>
+
+          <figure className="md:col-start-9 md:col-span-4 md:row-start-1 md:row-span-2 max-md:w-3/4 max-md:self-end max-md:ml-auto">
+            <div className="bg-photo relative rotate-2 shadow-[0_1rem_2rem_-1rem_rgb(0_0_0/0.35)]">
+              <img src="/steve.jpg" alt="Steve Jobs poster: Let's go invent tomorrow instead of worrying about what happened yesterday" className="w-full aspect-4/5 object-cover grayscale" />
+              {/* tape strips */}
+              <span aria-hidden className="absolute -top-3 left-6 w-20 h-6 -rotate-6 bg-white/60" />
+              <span aria-hidden className="absolute -top-3 right-6 w-20 h-6 rotate-3 bg-white/60" />
+            </div>
+            <figcaption className="mt-5 font-mono text-2xs uppercase tracking-widest leading-relaxed">
+              <span className="font-bold">Exhibit A</span> — "Design is not just what it looks like and feels like. Design is how it works." — Steve Jobs
+            </figcaption>
+          </figure>
         </div>
+
       </section>
 
-      {/* Me */}
-      <section className="min-h-screen flex max-md:flex-col-reverse gap-10 justify-end items-center max-md:mt-40" ref={sectionRef}>
-        <article
-          className="h-30 min-w-75 w-full md:w-[40vw] relative md:absolute left-0 bg-cover bg-center"
-          ref={filmRef}
-          style={{ backgroundImage: "url('/lib.jpg')" }}
-        />
 
-        <div ref={itemsRef} className="flex flex-col justify-between items-center gap-20 z-20">
-          {me.map((item, index) => (
-            <div key={index} className="me-item flex flex-col gap-3">
-              <div className="me-header flex gap-5">
-                <span className="me-icon mt-0.5"><PiPlus /></span>
-                <h6 className="text-xs font-semibold uppercase mb-2">{item.title}</h6>
-              </div>
-              <p className="me-desc text-sm font-light max-w-100">{item.description}</p>
-            </div>
+      {/* Expertise — big type index. Desktop (mouse/pen): hovering a row nudges it, dims the others, reveals its
+          description and a desk-photo crop that trails the cursor. Touch: descriptions are always shown. */}
+      <section ref={expertiseRef} className="flex flex-col gap-8 py-16" onPointerMove={moveExpCursor}>
+        <p className="font-mono text-2xs uppercase tracking-widest">(Expertise)</p>
+        <ul className="border-t border-secondary/20" onPointerLeave={() => { setHoverExp(null); setExpPointer(false) }}>
+          {expertise.map((item, i) => (
+            <li
+              key={item.title}
+              tabIndex={0}
+              onPointerEnter={(e) => { if (e.pointerType !== "touch") { setHoverExp(i); setExpPointer(true) } }}
+              // keyboard focus only: a tap also focuses the row, and shouldn't dim the others on phones
+              onFocus={(e) => e.currentTarget.matches(":focus-visible") && setHoverExp(i)}
+              onBlur={() => setHoverExp(null)}
+              className="exp-row group grid grid-cols-[2.5rem_1fr] md:grid-cols-[3rem_1fr_minmax(0,22rem)] gap-x-4 gap-y-3 items-baseline py-6 md:py-8 border-b border-secondary/20 outline-none"
+            >
+              <span className="font-mono text-2xs opacity-50">{String(i + 1).padStart(2, "0")}</span>
+              <h3 className={`font-light uppercase tracking-tight leading-none text-4xl sm:text-6xl lg:text-7xl transition-[translate,opacity] duration-500 ${hoverExp === i ? "translate-x-4" : ""} ${hoverExp !== null && hoverExp !== i ? "opacity-30" : ""}`}>
+                {item.title}
+              </h3>
+              <p className={`col-start-2 md:col-start-3 font-mono text-xs sm:text-[0.8rem] leading-relaxed transition-opacity duration-500 pointer-fine:md:opacity-0 ${hoverExp === i ? "pointer-fine:md:opacity-100" : ""}`}>
+                {item.description}
+              </p>
+            </li>
+          ))}
+        </ul>
+
+        {/* trailing photo: one crop per row, cross-faded; positioned by GSAP, centred on the pointer */}
+        <div
+          ref={expCursorRef}
+          aria-hidden
+          className={`exp-photo hidden pointer-fine:block fixed top-0 left-0 z-30 -ml-28 -mt-36 w-56 aspect-4/5 overflow-hidden pointer-events-none transition-[scale,opacity] duration-300 ${hoverExp !== null && expPointer ? "scale-100 opacity-100" : "scale-50 opacity-0"}`}
+        >
+          {expertise.map((item, i) => (
+            <img
+              key={item.title}
+              src={item.img}
+              alt=""
+              className={`absolute inset-0 w-full h-full object-cover grayscale transition-opacity duration-300 ${hoverExp === i ? "opacity-100" : "opacity-0"}`}
+            />
           ))}
         </div>
       </section>
 
-      {/* Expertise */}
-      <section className="flex flex-col gap-20 md:gap-40" ref={expertiseRef}>
-        <h6 className="font-semibold font-mono text-4xl tracking-[0.4em] mb-2 about">about</h6>
+      {/* Stack — typewritten document layout: numbered headings in both margins, indented lists, hand-drawn marks */}
+      <section ref={stackRef} className={`${courier.className} relative isolate overflow-hidden pt-24 md:pt-32 pb-12`}>
+        <StackPoster />
+        <div className="relative isolate mx-auto max-w-152 text-[0.78rem] sm:text-sm leading-relaxed">
+          <p className="stack-line text-center">
+            <span className="relative inline-block font-bold">STACK<Scribble /></span>
+          </p>
+          <p className="stack-line text-center mt-1">(what I build with)</p>
 
-        <div className="flex max-md:flex-col-reverse items-left md:items-end justify-between gap-20">
-          <article
-            className="h-[60vh] w-full md:w-[50vw] md:h-screen overflow-hidden flex justify-center items-end bg-cover bg-center grayscale-60"
-            style={{ backgroundImage: "url('/desk.jpg')" }}
-          >
-            {/* <img src="black-fro.png" alt="" /> */}
-          </article>
-          {/* <p className="text-xs">(Expertise)</p> */}
-          <div ref={cardsRef} className="grid md:grid-cols-2 gap-5 mb-">
-            {expertise.map((item, index) => (
-              <div key={index} className="card flex flex-col gap-3 mt-10">
-                <h6 className="text-xs font-semibold uppercase mb-1">{item.title}</h6>
-                {/* <div
-                    className="expertise-line w-full h-px bg-neutral-700 mb-2"
-                    style={{ transformOrigin: "left center" }}
-                  /> */}
-                <p className="text-sm font-light max-w-100">{item.description}</p>
-              </div>
-            ))}
+          <NumberedHeading n={1}>FRONTEND</NumberedHeading>
+          <ToolList tools={FRONTEND} />
+
+          <NumberedHeading n={2}>BACKEND</NumberedHeading>
+          <ToolList tools={BACKEND} bracket />
+
+          <NumberedHeading n={3}>TOOLS</NumberedHeading>
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-start">
+            <div className="flex-1"><ToolList tools={TOOLS} /></div>
+            {/* pixel art: pixelated scaling keeps its hard edges; no grayscale so the green power light shows */}
+            <img src="/stack-computer.png" alt="Pixel-art desktop computer" className="stack-photo w-40 sm:w-44 aspect-4/3 object-cover [image-rendering:pixelated] self-end sm:self-start mt-3 mr-6 sm:mr-0" />
           </div>
         </div>
       </section>
 
-      {/* Stack */}
-      <section className="h-screen relative flex justify-center items-center" ref={stackRef}>
-        <h2 className="font-semibold font-mono text-4xl tracking-[0.4em] stack">stack</h2>
-
-        {/* Scatter overlay — same pattern as hobbies */}
-        {activeStackCol !== null && (() => {
-          const col = stackCollages[activeStackCol]
-          return (
-            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
-              {col.images.map((img, i) => (
-                <div
-                  key={i}
-                  className="scatter-item absolute"
-                  style={{
-                    left: `${img.x}%`,
-                    top: `${img.y}%`,
-                    width: img.w,
-                    transform: `rotate(${img.rotate}deg)`,
-                    animationDelay: `${img.delay}ms`,
-                  }}
-                >
-                </div>
-              ))}
-              {col.labels.map((lbl, i) => (
-                <span
-                  key={i}
-                  className="scatter-label absolute text-2xs font-semibold tracking-[0.18em] uppercase opacity-60"
-                  style={{
-                    left: `${20 + (i * 13) % 60}%`,
-                    top: `${30 + (i * 17) % 40}%`,
-                    animationDelay: `${i * 40}ms`,
-                  }}
-                >
-                  {lbl}
-                </span>
-              ))}
-            </div>
-          )
-        })()}
-
-        <div className="w-full absolute bottom-10 left-0 flex max-md:flex-col max-md:items-start justify-between max-md:gap-5 md:text-center">
-          <article className="stack-col flex flex-col items-center gap-3">
-            <p className="text-2xs md:text-sm font-semibold uppercase w-30 md:w-60">
-              Frontend
-            </p>
-          </article>
-          <article className="stack-col flex flex-col items-center gap-3">
-            <p className="text-2xs md:text-sm font-semibold uppercase w-30 md:w-60">
-              Backend
-            </p>
-          </article>
-          <article className="stack-col flex flex-col items-center gap-3">
-            <p className="text-2xs md:text-sm font-semibold uppercase w-30 md:w-60">
-              Tools
-            </p>
-          </article>
-        </div>
-
-        <p className="text-xs font-light opacity-20 w-60 absolute top-1/2 -right-1/14 rotate-270">
-          "Good design is obvious. Great design is transparent."
-          <span className="font-semibold"> — Joe Sparano</span>
-        </p>
-      </section>
-
-      <div className="h-[40vh] m"></div>
-
       {/* Hobbies */}
       <section
-        className="h-screen relative flex justify-center items-center gap-5"
+        className="h-[60vh] relative overflow-hidden flex justify-center items-center gap-5"
         ref={hobbiesRef}
       >
-        {/* Scatter overlay */}
-        <style>{`
-    @keyframes scatterIn {
-      from { opacity: 0; transform: scale(0.82) translateY(8px); }
-      to   { opacity: 1; transform: scale(1)    translateY(0px); }
-    }
-    .scatter-item {
-      animation: scatterIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-    .scatter-label {
-      animation: scatterIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-  `}</style>
+        {/* Showcase: on the light page, the hovered category's covers burst out from the centre into
+            full colour around the cards, and its collage name sits huge behind. Always mounted so it can animate out too. */}
+        <div aria-hidden className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-500 ${hoveredHobby ? "opacity-100" : "opacity-0"}`}>
+          {(["music", "reading", "anime"] as const).map((key) => {
+            const c = hobbyCollages[key]
+            const on = hoveredHobby === key
+            return (
+              <div key={key} className={`absolute inset-0 transition-opacity duration-300 ${on ? "opacity-100" : "opacity-0"}`}>
+                <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-mono font-semibold uppercase leading-none tracking-tight text-[22vw] opacity-[0.06]">
+                  {c.title}
+                </p>
+                {c.images.map((img, i) => {
+                  const slot = SHOWCASE_SLOTS[i % SHOWCASE_SLOTS.length]
+                  return (
+                    <img
+                      key={img.src}
+                      src={img.src}
+                      alt=""
+                      className={`absolute w-24 sm:w-40 md:w-52 -translate-x-1/2 -translate-y-1/2 shadow-2xl ${i >= 4 ? "max-md:hidden" : ""} transition-[left,top,rotate,scale,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]`}
+                      style={{
+                        left: on ? `${slot.x}%` : "50%",
+                        top: on ? `${slot.y}%` : "50%",
+                        rotate: on ? `${slot.r}deg` : "0deg",
+                        scale: on ? "1" : "0.3",
+                        opacity: on ? 1 : 0,
+                        transitionDelay: on ? `${i * 60}ms` : "0ms",
+                      }}
+                    />
+                  )
+                })}
+                <p className="absolute inset-x-6 top-[76%] mx-auto max-w-2xl text-center font-mono text-2xs uppercase tracking-[0.2em] leading-relaxed opacity-60">
+                  {c.labels.map((l) => l.text).join(" · ")}
+                </p>
+              </div>
+            )
+          })}
+        </div>
 
-        {hoveredHobby && (() => {
-          const collage = hobbyCollages[hoveredHobby]
-          return (
-            <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden">
-              {/* title top-left */}
-              <span
-                className="scatter-item absolute top-6 left-6 text-4xl font-mono font-semibold tracking-tight opacity-90"
-                style={{ animationDelay: "0ms" }}
-              >
-                {hoveredHobby}
-              </span>
-
-
-
-              {/* scattered images */}
-              {collage.images.map((img, i) => (
-                <div
-                  key={i}
-                  className="scatter-item absolute"
-                  style={{
-                    left: `${img.x}%`,
-                    top: `${img.y}%`,
-                    width: img.w,
-                    transform: `rotate(${img.rotate}deg)`,
-                    animationDelay: `${img.delay}ms`,
-                  }}
-                >
-                  <img
-                    src={img.src}
-                    alt=""
-                    className="w-full h-auto object-cover grayscale"
-                    style={{ display: "block" }}
-                  />
-                </div>
-              ))}
-
-              {/* scattered text labels */}
-              {collage.labels.map((lbl, i) => (
-                <span
-                  key={i}
-                  className="scatter-label absolute text-2xs font-semibold tracking-[0.18em] uppercase opacity-70"
-                  style={{
-                    left: `${lbl.x}%`,
-                    top: `${lbl.y}%`,
-                    animationDelay: `${lbl.delay}ms`,
-                  }}
-                >
-                  {lbl.text}
-                </span>
-              ))}
-            </div>
-          )
-        })()}
-
-        {/* Cards */}
+        {/* Cards — dimming lives on the illustrations: GSAP fades the <article>s in, and a CSS opacity transition there fights it */}
         <article
-          className="text-center relative z-20 cursor-default"
-          onMouseEnter={() => setHoveredHobby("music")}
-          onMouseLeave={() => setHoveredHobby(null)}
+          className={`text-center relative z-20 cursor-default`}
+          {...hobbyProps("music")}
         >
           <p className="text-xs font-medium mb-2 music">music</p>
           <div className="relative">
-            <img src="earphones.png" alt="Earphones" className="w-[10.1875rem]" />
+            <img src="earphones.png" alt="Earphones" className={`w-[10.1875rem] bg-primary transition-opacity duration-500 ${hoveredHobby && hoveredHobby !== "music" ? "opacity-40" : ""}`} />
             <div
               ref={h1Ref}
               className="absolute z-10 inset-0 bg-primary"
@@ -664,12 +511,11 @@ export default function About() {
         </article>
 
         <article
-          className="text-center mt-12 z-20 cursor-default"
-          onMouseEnter={() => setHoveredHobby("reading")}
-          onMouseLeave={() => setHoveredHobby(null)}
+          className={`text-center relative mt-12 z-20 cursor-default`}
+          {...hobbyProps("reading")}
         >
           <div className="relative">
-            <img src="read.png" alt="Reading" className="w-[10.1875rem]" />
+            <img src="read.png" alt="Reading" className={`w-[10.1875rem] bg-primary transition-opacity duration-500 ${hoveredHobby && hoveredHobby !== "reading" ? "opacity-40" : ""}`} />
             <div
               ref={h2Ref}
               className="absolute z-10 inset-0 bg-primary"
@@ -680,9 +526,8 @@ export default function About() {
         </article>
 
         <article
-          className="text-center z-20 cursor-default"
-          onMouseEnter={() => setHoveredHobby("anime")}
-          onMouseLeave={() => setHoveredHobby(null)}
+          className={`text-center relative z-20 cursor-default`}
+          {...hobbyProps("anime")}
         >
           <p className="text-xs font-medium mb-2 anime">anime</p>
           <div className="relative">
@@ -691,11 +536,11 @@ export default function About() {
               className="absolute z-10 inset-0 bg-primary"
               style={{ transformOrigin: "right center" }}
             />
-            <img src="anime.png" alt="Anime" className="w-[10.1875rem]" />
+            <img src="anime.png" alt="Anime" className={`w-[10.1875rem] bg-primary transition-opacity duration-500 ${hoveredHobby && hoveredHobby !== "anime" ? "opacity-40" : ""}`} />
           </div>
         </article>
 
-        <article className="absolute bottom-0 right-0 font-mono text-3xl name z-20">
+        <article className={`absolute bottom-0 right-0 font-mono text-3xl name z-20 transition-opacity duration-500 ${hoveredHobby ? "opacity-0" : ""}`}>
           <h4 className="opacity-20">Obasa</h4>
           <h4 className="opacity-20">Temiloluwa</h4>
           <h6 className="text-xl absolute top-1/3 tracking-[0.2em] font-semibold">Hobbies</h6>
