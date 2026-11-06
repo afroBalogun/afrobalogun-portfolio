@@ -33,12 +33,14 @@ export default function Works() {
     cachedGroups ?? []
   )
   const titleAnimatedRef = useRef(false)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     if (cachedGroups) return  // already fetched, skip
 
     fetch("/api/projects")
-      .then((r) => r.json())
+      // a failed API (e.g. DB down) returns an error page, not JSON; show a message instead of an endless skeleton
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`projects ${r.status}`))))
       .then((projects: Project[]) => {
         const map = new Map<string, Project[]>()
         for (const p of projects) {
@@ -50,6 +52,7 @@ export default function Works() {
         cachedGroups = result
         setGroups(result)
       })
+      .catch(() => setFailed(true))
   }, [])
   useGSAP(() => {
     if (!groups.length) return
@@ -92,7 +95,9 @@ export default function Works() {
         <h2 className="works-title font-semibold font-mono text-4xl tracking-[0.2em] opacity-20">works</h2>
       </div>
 
-      {!groups.length ? <WorksSkeleton /> : groups.map((group) => (
+      {failed ? (
+        <p className="font-mono text-xs uppercase tracking-widest opacity-50">Projects couldn&apos;t load. Try again in a moment.</p>
+      ) : !groups.length ? <WorksSkeleton /> : groups.map((group) => (
         <section key={group.year} className="w-full flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h3 className="year-label font-medium font-mono text-sm tracking-[0.2em]">{group.year}</h3>
@@ -112,7 +117,7 @@ export default function Works() {
                     className="absolute inset-0 w-full h-full object-cover grayscale transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                   <div className="card-mask absolute inset-0 z-10 bg-neutral-300" style={{ transformOrigin: "top center" }} />
-                  <div className="absolute inset-0 z-20 flex flex-col justify-end p-3 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                  <div className="absolute inset-0 z-20 flex flex-col justify-end p-3 bg-linear-to-t from-black/60 to-transparent text-primary opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity duration-400">
                     <p className="card-meta text-2xs font-mono uppercase tracking-widest opacity-60 mb-1">{project.role}</p>
                     <p className="card-meta text-xs font-mono font-medium leading-snug">{project.title}</p>
                   </div>

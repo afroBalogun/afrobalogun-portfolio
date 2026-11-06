@@ -1,13 +1,13 @@
 "use client"
 import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
-import { ScrollTrigger, SplitText } from "gsap/all"
+import { ScrollTrigger } from "gsap/all"
 import Link from "next/link"
 import { useRef, useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { GoArrowDownRight } from "react-icons/go"
+import { GoArrowUpRight } from "react-icons/go"
 
-gsap.registerPlugin(useGSAP, SplitText, ScrollTrigger)
+gsap.registerPlugin(useGSAP, ScrollTrigger)
 
 interface Project {
   _id: string; slug: string; title: string; client: string
@@ -16,10 +16,29 @@ interface Project {
   nextProject: { slug: string; title: string }
 }
 
+// photo with the curtain reveal: a page-coloured mask slides off it on scroll
+function Photo({ src, alt = "", className = "" }: { src: string; alt?: string; className?: string }) {
+  return (
+    <div className={`relative overflow-hidden ${className}`}>
+      <img src={src} alt={alt} className="block w-full h-full object-cover" />
+      <div className="img-mask absolute inset-0 z-10 bg-primary" />
+    </div>
+  )
+}
+
+// page numbers sit in the outer corners of each spread, like a printed magazine
+function Folio({ left, right }: { left: number; right: number }) {
+  return (
+    <div className="md:col-span-8 flex justify-between font-mono text-2xs tracking-widest opacity-50">
+      <span>{String(left).padStart(2, "0")}</span>
+      <span>{String(right).padStart(2, "0")}</span>
+    </div>
+  )
+}
+
 export default function Work() {
   const { slug } = useParams<{ slug: string }>()
   const mainRef = useRef<HTMLElement>(null)
-  const panelRef = useRef<HTMLElement>(null)
   const [project, setProject] = useState<Project | null>(null)
 
   useEffect(() => {
@@ -29,16 +48,7 @@ export default function Work() {
   useGSAP(() => {
     if (!project) return
 
-    // Panel items stagger up
-    gsap.to(".panel-item", {
-      opacity: 1,
-      y: 0,
-      duration: 0.6,
-      ease: "power3.out",
-      stagger: 0.08,
-    })
-
-    // Images — drool-down curtain on scroll
+    // photos: curtain slides down off each image as it enters
     gsap.utils.toArray<HTMLElement>(".img-mask", mainRef.current).forEach((mask) => {
       gsap.to(mask, {
         yPercent: 100, duration: 1.3, ease: "power4.inOut",
@@ -46,152 +56,85 @@ export default function Work() {
       })
     })
 
-    // Body text line reveal
-    gsap.utils.toArray<HTMLElement>(".body-text", mainRef.current).forEach((el) => {
-      const split = new SplitText(el, { type: "lines" })
-      gsap.from(split.lines, {
-        opacity: 0, y: 14, duration: 0.7, ease: "power3.out", stagger: 0.08,
-        scrollTrigger: { trigger: el, start: "top 85%" },
+    // text blocks fade up as each spread arrives
+    gsap.utils.toArray<HTMLElement>(".spread-text", mainRef.current).forEach((el) => {
+      gsap.from(el, {
+        opacity: 0, y: 14, duration: 0.8, ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 88%" },
       })
     })
-
-    // Next project
-    const nextSplit = new SplitText(".next-label", { type: "chars" })
-    gsap.from(nextSplit.chars, {
-      opacity: 0, y: 8, duration: 0.4, ease: "power3.out", stagger: 0.025,
-      scrollTrigger: { trigger: ".next-label", start: "top 90%" },
-    })
-
   }, { scope: mainRef, dependencies: [project] })
 
   if (!project) return null
 
-  const [leftTop, leftBottom, midSingle, fullWidth1, fullWidth2] = project.images
+  const [pairA, pairB, wide, ...extra] = project.images.filter(Boolean)
+  // body copy is split across the two spreads; with no body, the description carries spread one
+  const body = project.body.length ? project.body : [project.description]
+  const half = Math.ceil(body.length / 2)
+  const bodyA = body.slice(0, half)
+  const bodyB = body.slice(half)
 
   return (
-    <main ref={mainRef} className="flex min-h-screen">
+    <main ref={mainRef} className="min-h-screen px-4 sm:px-6 lg:px-12 pt-28 pb-16 flex flex-col gap-16 font-serif">
 
-      {/* ── Left sticky panel ── */}
-      <aside
-        ref={panelRef}
-        className="hidden md:flex w-[30vw] shrink-0 sticky top-0 h-screen flex-col justify-between px-8 lg:px-12 py-20 border-r border-secondary/10"
-      >
-        {/* Top — identity */}
-        <div className="flex flex-col gap-6">
-          <p className="panel-item text-2xs font-mono tracking-[0.2em] uppercase opacity-30" style={{ opacity: 0 }}>
-            {project.year}
-          </p>
-          <h1 className="panel-item font-mono font-semibold text-xl leading-snug" style={{ opacity: 0 }}>
-            {project.client}
-          </h1>
-          <div className="panel-item h-px bg-current opacity-10 w-full" style={{ opacity: 0 }} />
-          <p className="panel-item text-sm text-secondary/60 leading-relaxed max-w-56" style={{ opacity: 0 }}>
-            {project.description}
-          </p>
+      {/* ── Spread 1 (pp. 01–02): meta + standfirst column, cover across the fold, body in columns ── */}
+      {/* the spread is an 8-column grid: columns 1–4 are the left page, 5–8 the right; the line is the fold */}
+      <section className="relative grid grid-cols-1 md:grid-cols-8 gap-x-6 gap-y-10 md:before:absolute md:before:inset-y-0 md:before:left-1/2 md:before:w-px md:before:bg-secondary/15">
+        <div className="spread-text md:col-span-2 flex flex-col gap-5 text-sm leading-snug">
+          <p className="font-mono text-2xs uppercase tracking-widest opacity-60">{project.year} · {project.role} · {project.client}</p>
+          <p className="text-justify hyphens-auto">{project.description}</p>
         </div>
+        <Photo src={project.coverImg} alt={project.title} className="md:col-span-6 aspect-16/10" />
 
-        {/* Mid — meta */}
-        <div className="flex flex-col gap-5">
-          <div className="panel-item flex flex-col gap-1" style={{ opacity: 0 }}>
-            <p className="text-2xs font-mono tracking-[0.2em] uppercase opacity-30">role</p>
-            <p className="text-xs capitalize">{project.role}</p>
-          </div>
-
-          {project.link && (
-            <Link
-              href={project.link}
-              target="_blank"
-              className="panel-item flex items-center gap-1.5 text-xs font-semibold uppercase underline underline-offset-4 hover:opacity-50 transition-opacity w-fit"
-              style={{ opacity: 0 }}
-            >
-              visit
-              <GoArrowDownRight className="text-base" />
-            </Link>
-          )}
+        <div className="spread-text md:col-span-8 columns-1 sm:columns-2 md:columns-4 gap-6 text-[0.8rem] leading-snug text-justify hyphens-auto">
+          {bodyA.map((para, i) => <p key={i} className="mb-3 break-inside-avoid-column">{para}</p>)}
         </div>
+        <Folio left={1} right={2} />
+      </section>
 
-        {/* Bottom — next */}
-        <div className="flex flex-col gap-2">
-          <p className="next-label text-2xs font-mono tracking-[0.2em] uppercase opacity-30">
-            next
-          </p>
-          <Link
-            href={`/works/${project.nextProject.slug}`}
-            className="next-label flex items-center gap-1 text-xs font-mono font-medium hover:opacity-50 transition-opacity"
-          >
-            {project.nextProject.title}
-            <GoArrowDownRight className="text-sm" />
-          </Link>
+      {/* ── Spread 2 (pp. 03–04): headline + captioned pair on the left page, wide photo and body on the right ── */}
+      <section className="relative grid grid-cols-1 md:grid-cols-8 gap-x-6 gap-y-10 md:before:absolute md:before:inset-y-0 md:before:left-1/2 md:before:w-px md:before:bg-secondary/15">
+        <div className="spread-text md:col-span-4 md:pr-8 flex flex-col items-center gap-4 text-center self-center">
+          <h1 className="font-bold uppercase leading-tight text-2xl sm:text-3xl">{project.title}</h1>
+          <p className="italic text-sm leading-snug max-w-md">{project.description}</p>
         </div>
-      </aside>
+        {wide && <Photo src={wide} className="md:col-span-4 aspect-16/10" />}
 
-      {/* ── Right scrolling images ── */}
-      <div className="flex-1 flex flex-col gap-2">
-
-        {/* Cover */}
-        <div className="relative w-full overflow-hidden">
-          <img src={project.coverImg} alt={project.title} className="w-full h-auto block" />
-          <div className="img-mask absolute inset-0 z-10 bg-background" />
-        </div>
-
-        {/* Body copy — appears between images */}
-        {project.body.length > 0 && (
-          <div className="px-8 lg:px-12 py-16 md:py-20 flex flex-col gap-8 max-w-xl">
-            {project.body.map((para, i) => (
-              <p key={i} className="body-text text-sm text-secondary/60 leading-relaxed">{para}</p>
+        {(pairA || pairB) && (
+          <div className="md:col-span-4 md:pr-8 grid grid-cols-2 gap-4">
+            {[pairA, pairB].filter(Boolean).map((src, i) => (
+              <figure key={src} className="flex flex-col gap-2">
+                <figcaption className="spread-text text-xs leading-tight">
+                  Photo — {String(i + 1).padStart(2, "0")}<br /><span className="font-bold">{project.client}</span>
+                </figcaption>
+                <Photo src={src} className="aspect-3/4" />
+              </figure>
             ))}
-
-            {project.link && (
-              <Link
-                href={project.link}
-                target="_blank"
-                className="md:hidden panel-item flex items-center gap-1.5 text-xs font-semibold uppercase underline underline-offset-4 hover:opacity-50 transition-opacity w-fit"
-                style={{ opacity: 0 }}
-              >
-                visit
-                <GoArrowDownRight className="text-base" />
-              </Link>
-            )}
           </div>
         )}
-
-        {/* Left stack */}
-        {[leftTop, leftBottom].filter(Boolean).map((img, i) => (
-          <div key={i} className="relative w-full md:w-2/3 overflow-hidden">
-            <img src={img} alt="" className="w-full h-auto block" />
-            <div className="img-mask absolute inset-0 z-10 bg-background" />
-          </div>
-        ))}
-
-        {/* Mid single */}
-        {midSingle && (
-          <div className="relative w-full md:w-1/2 overflow-hidden self-end">
-            <img src={midSingle} alt="" className="w-full h-auto block" />
-            <div className="img-mask absolute inset-0 z-10 bg-background" />
+        {bodyB.length > 0 && (
+          <div className="spread-text md:col-start-5 md:col-span-4 columns-1 sm:columns-2 gap-6 text-[0.8rem] leading-snug text-justify hyphens-auto self-start">
+            {bodyB.map((para, i) => <p key={i} className="mb-3 break-inside-avoid-column">{para}</p>)}
           </div>
         )}
+        <Folio left={3} right={4} />
+      </section>
 
-        {/* Full-width images */}
-        {[fullWidth1, fullWidth2].filter(Boolean).map((img, i) => (
-          <div key={i} className="relative w-full overflow-hidden">
-            <img src={img} alt="" className="w-full h-auto block" />
-            <div className="img-mask absolute inset-0 z-10 bg-background" />
-          </div>
-        ))}
+      {/* any further images run full width */}
+      {extra.map((src) => <Photo key={src} src={src} className="w-full aspect-16/9" />)}
 
-        {/* Mobile-only next project */}
-        <div className="md:hidden flex items-center justify-between px-6 py-12 border-t border-secondary/10">
-          <span className="text-2xs font-mono uppercase tracking-widest opacity-30">next</span>
-          <Link
-            href={`/works/${project.nextProject.slug}`}
-            className="flex items-center gap-1 text-xs font-mono font-medium hover:opacity-50 transition-opacity"
-          >
-            {project.nextProject.title}
-            <GoArrowDownRight className="text-sm" />
+      {/* ── Back matter: visit + next project ── */}
+      <footer className="flex items-end justify-between gap-6 border-t border-secondary/15 pt-6 font-mono text-xs uppercase tracking-widest">
+        {project.link ? (
+          <Link href={project.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 underline underline-offset-4 hover:opacity-50 transition-opacity">
+            visit <GoArrowUpRight />
           </Link>
-        </div>
-
-      </div>
+        ) : <span />}
+        <Link href={`/works/${project.nextProject.slug}`} className="flex flex-col items-end gap-1 hover:opacity-50 transition-opacity text-right">
+          <span className="text-2xs opacity-50">next</span>
+          <span className="flex items-center gap-1 font-semibold">{project.nextProject.title} <GoArrowUpRight /></span>
+        </Link>
+      </footer>
     </main>
   )
 }

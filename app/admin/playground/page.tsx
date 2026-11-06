@@ -4,13 +4,17 @@ import { useEffect, useState } from "react"
 import { ImageUpload } from "@/components/admin/ImageUpload"
 import { PiX } from "react-icons/pi"
 
-interface Work { _id: string; index: number; img: string; link: string; tags: string[] }
+interface Work { _id: string; index: number; img: string; title?: string; link?: string; tags: string[] }
+
+const errorOf = async (res: Response) => (await res.json().catch(() => null))?.error ?? `failed (${res.status})`
 
 export default function Playground() {
   const [works, setWorks] = useState<Work[]>([])
+  const [error, setError] = useState("")
 
   // add form
   const [img, setImg] = useState("")
+  const [title, setTitle] = useState("")
   const [tags, setTags] = useState("")
   const [link, setLink] = useState("")
   const [saving, setSaving] = useState(false)
@@ -18,13 +22,16 @@ export default function Playground() {
   // edit drawer
   const [editing, setEditing] = useState<Work | null>(null)
   const [editImg, setEditImg] = useState("")
+  const [editTitle, setEditTitle] = useState("")
   const [editTags, setEditTags] = useState("")
   const [editLink, setEditLink] = useState("")
   const [updating, setUpdating] = useState(false)
+  const [editError, setEditError] = useState("")
 
   const load = async () => {
     const res = await fetch("/api/playground")
-    setWorks(await res.json())
+    if (res.ok) setWorks(await res.json())
+    else setError(await errorOf(res))
   }
 
   useEffect(() => { load() }, [])
@@ -32,57 +39,71 @@ export default function Playground() {
   const openEdit = (w: Work) => {
     setEditing(w)
     setEditImg(w.img)
+    setEditTitle(w.title ?? "")
     setEditTags(w.tags.join(", "))
-    setEditLink(w.link)
+    setEditLink(w.link ?? "")
+    setEditError("")
   }
 
   const closeEdit = () => {
     setEditing(null)
     setEditImg("")
+    setEditTitle("")
     setEditTags("")
     setEditLink("")
+    setEditError("")
   }
 
+  // the server assigns the index, so no number is sent from here
   const add = async () => {
     if (!img) return
     setSaving(true)
-    await fetch("/api/playground", {
+    setError("")
+    const res = await fetch("/api/playground", {
       method: "POST",
       body: JSON.stringify({
-        index: works.length + 1,
         img,
+        title,
         tags: tags.split(",").map(t => t.trim()).filter(Boolean),
         link,
       }),
       headers: { "Content-Type": "application/json" },
     })
-    setImg(""); setTags(""); setLink("")
     setSaving(false)
+    if (!res.ok) return setError(await errorOf(res)) // keep the form so the upload isn't lost
+    setImg(""); setTitle(""); setTags(""); setLink("")
     load()
   }
 
   const update = async () => {
     if (!editing) return
     setUpdating(true)
-    await fetch(`/api/playground/${editing._id}`, {
+    setEditError("")
+    const res = await fetch(`/api/playground/${editing._id}`, {
       method: "PUT",
       body: JSON.stringify({
         img: editImg,
+        title: editTitle,
         tags: editTags.split(",").map(t => t.trim()).filter(Boolean),
         link: editLink,
       }),
       headers: { "Content-Type": "application/json" },
     })
     setUpdating(false)
+    if (!res.ok) return setEditError(await errorOf(res))
     closeEdit()
     load()
   }
 
   const remove = async (id: string) => {
     if (!confirm("remove?")) return
-    await fetch(`/api/playground/${id}`, { method: "DELETE" })
+    setError("")
+    const res = await fetch(`/api/playground/${id}`, { method: "DELETE" })
+    if (!res.ok) setError(await errorOf(res))
     load()
   }
+
+  const position = (w: Work) => String(works.indexOf(w) + 1).padStart(2, "0")
 
   return (
     <div className="flex flex-col gap-10">
@@ -93,18 +114,25 @@ export default function Playground() {
         <p className="text-2xs tracking-widest uppercase opacity-30">add work</p>
         <ImageUpload label="image" value={img} onChange={setImg} folder="portfolio/playground" />
         <div className="flex flex-col gap-1.5">
+          <label className="text-2xs tracking-widest uppercase opacity-40">title (optional)</label>
+          <input
+            className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
+            value={title} onChange={e => setTitle(e.target.value)}
+            placeholder="shown in the preview + used as alt text"
+          />
           <label className="text-2xs tracking-widest uppercase opacity-40">tags (comma separated)</label>
           <input
             className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
             value={tags} onChange={e => setTags(e.target.value)}
             placeholder="design, motion, 3d"
           />
-          <label className="text-2xs tracking-widest uppercase opacity-40">link</label>
+          <label className="text-2xs tracking-widest uppercase opacity-40">link (optional)</label>
           <input
             className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
             value={link} onChange={e => setLink(e.target.value)}
           />
         </div>
+        {error && <p className="text-2xs text-red-700 tracking-widest">{error}</p>}
         <button
           onClick={add} disabled={saving || !img}
           className="border border-secondary/25 px-4 py-2.5 text-2xs tracking-widest uppercase hover:bg-secondary/5 transition-colors disabled:opacity-30"
@@ -119,7 +147,7 @@ export default function Playground() {
           <div key={w._id} className="group relative aspect-square">
             <img src={w.img} alt="" className="w-full h-full object-cover grayscale opacity-70" />
             <div className="absolute inset-0 bg-primary/85 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-              <span className="text-2xs tracking-widest opacity-60">{String(w.index).padStart(2, "0")}</span>
+              <span className="text-2xs tracking-widest opacity-60">{position(w)}{w.title && ` · ${w.title}`}</span>
               <button
                 onClick={() => openEdit(w)}
                 className="text-2xs tracking-widest hover:opacity-100 opacity-60"
@@ -147,7 +175,7 @@ export default function Playground() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-secondary/15">
               <p className="text-2xs tracking-widest uppercase opacity-40">
-                edit — {String(editing.index).padStart(2, "0")}
+                edit — {position(editing)}
               </p>
               <button onClick={closeEdit} className="opacity-40 hover:opacity-100 transition-opacity">
                 <PiX size={14} />
@@ -159,6 +187,14 @@ export default function Playground() {
               <ImageUpload label="image" value={editImg} onChange={setEditImg} folder="portfolio/playground" />
 
               <div className="flex flex-col gap-1.5">
+                <label className="text-2xs tracking-widest uppercase opacity-40">title (optional)</label>
+                <input
+                  className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
+                  value={editTitle} onChange={e => setEditTitle(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
                 <label className="text-2xs tracking-widest uppercase opacity-40">tags (comma separated)</label>
                 <input
                   className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
@@ -168,12 +204,13 @@ export default function Playground() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-2xs tracking-widest uppercase opacity-40">link</label>
+                <label className="text-2xs tracking-widest uppercase opacity-40">link (optional)</label>
                 <input
                   className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
                   value={editLink} onChange={e => setEditLink(e.target.value)}
                 />
               </div>
+              {editError && <p className="text-2xs text-red-700 tracking-widest">{editError}</p>}
             </div>
 
             {/* Footer */}

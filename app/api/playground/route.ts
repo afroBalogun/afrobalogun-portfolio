@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { connectDB } from "@/lib/mongodb"
-import { PlaygroundWork } from "@/models/PlaygroundWork"
+import { PlaygroundWork, cleanTags } from "@/models/PlaygroundWork"
 
 // GET /api/playground
 export async function GET() {
@@ -11,16 +11,18 @@ export async function GET() {
 
 // POST /api/playground
 export async function POST(req: Request) {
-  await connectDB()
+  const { img, title, tags, link } = await req.json()
 
-  const body = await req.json()
-  const { index, img, tags, link } = body
-
-  if (index === undefined || !img || !link) {
-    return NextResponse.json({ error: "index, img, and link are required" }, { status: 400 })
+  if (!img || typeof img !== "string") {
+    return NextResponse.json({ error: "An image is required" }, { status: 400 })
   }
 
-  const work = await PlaygroundWork.create({ index, img, tags, link })
+  await connectDB()
+
+  // server picks the next slot so additions never collide with gaps left by deletions
+  const last = await PlaygroundWork.findOne().sort({ index: -1 }).select("index").lean<{ index: number }>()
+  const index = (last?.index ?? 0) + 1
+
+  const work = await PlaygroundWork.create({ index, img, title, tags: cleanTags(tags), link })
   return NextResponse.json(work, { status: 201 })
 }
-

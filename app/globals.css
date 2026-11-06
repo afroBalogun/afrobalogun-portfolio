@@ -31,6 +31,16 @@ html {
   }
 
   /* quick double flick (flatten back + tilt) at the start of each cycle, then a long still stretch */
+  /* home cat easter egg: a quick double flick when clicked */
+  --animate-tail-flick: tail-flick 0.7s ease-in-out 1;
+  @keyframes tail-flick {
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(14deg); }
+    40% { transform: rotate(-10deg); }
+    60% { transform: rotate(12deg); }
+    80% { transform: rotate(-6deg); }
+  }
+
   --animate-ear-twitch-l: ear-twitch-l 7s ease-in-out infinite;
   @keyframes ear-twitch-l {
     0%, 12%, 100% { transform: none; }

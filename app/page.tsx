@@ -2,6 +2,7 @@
 import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
 import { useRef, useEffect, useState } from "react"
+import Link from "next/link"
 
 gsap.registerPlugin(useGSAP)
 
@@ -11,6 +12,13 @@ export default function Home() {
   const mask2Ref = useRef<HTMLDivElement>(null)
   const lbl1Ref = useRef<HTMLHeadingElement>(null)
   const lbl2Ref = useRef<HTMLHeadingElement>(null)
+  // cat easter egg: clicking swaps the tail's sway for a one-off double flick
+  const [flicking, setFlicking] = useState(false)
+  const flick = () => {
+    if (flicking) return
+    setFlicking(true)
+    setTimeout(() => setFlicking(false), 700)
+  }
 
   useGSAP(() => {
     const tl = gsap.timeline()
@@ -71,7 +79,7 @@ export default function Home() {
     <main className="min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-12 flex flex-col justify-between" ref={homeRef} style={{ visibility: "hidden" }}>
 
       {/* Quotes */}
-      <div className="flex max-sm:flex-col justify-between max-sm:w-full mt-10 max-lg:mb-12">
+      <div className="max-md:hidden flex justify-between mt-10 max-lg:mb-12">
         <div className="lg:absolute lg:top-1/5 max-sm:mt-5">
           <p className="quote-text text-2xs lg:text-xs font-extralight uppercase md:w-65 max-md:w-56">
             "Put your name on everything you do."<br />
@@ -89,15 +97,15 @@ export default function Home() {
       {/* Hero */}
       <section className="w-full flex-1 flex flex-col justify-center-safe max-md:items-center gap-5 lg:gap-8 relative">
 
-        <p id="topname" className="text-xs lg:text-sm font-light uppercase text-center">
+        <p id="topname" className="text-sm md:text-xs lg:text-sm font-light uppercase text-center">
           <span className="font-semibold">Temiloluwa Obasa,</span> (he/him) <br />
           content writer, music enthusiast.
         </p>
 
         <div className="font-mono w-full flex flex-row flex-nowrap items-start justify-center gap-1 relative py-8 sm:py-16">
 
-          {/* Image 1 */}
-          <article className="relative w-fit flex items-center justify-center">
+          {/* Image 1 — click/tap: double tail flick (decorative easter egg) */}
+          <article className="relative w-fit flex items-center justify-center cursor-pointer" onClick={flick}>
             <h4 className="z-10 absolute top-0 text-xs left-2 max-sm:left-4 max-sm:top-3 font-semibold" ref={lbl1Ref} style={{ whiteSpace: "pre" }} />
             <div className="relative overflow-hidden">
               {/* tail box measured from neko.png (215x309): x 78–132, y ≥ 216, where the PNG is transparent around it */}
@@ -107,7 +115,7 @@ export default function Home() {
                   src="neko.png"
                   alt=""
                   aria-hidden
-                  className="absolute inset-0 w-full motion-safe:in-[.alive]:animate-tail-sway"
+                  className={`absolute inset-0 w-full ${flicking ? "motion-safe:animate-tail-flick!" : "motion-safe:in-[.alive]:animate-tail-sway"}`}
                   style={{ clipPath: "inset(69.9% 38.6% 0 36.3%)", transformOrigin: "50.2% 69.9%" }}
                 />
                 {/* ears: a grey patch hides the original ear tip (not the base, so tilting shows no seam) and the copy flattens toward its base */}
@@ -162,7 +170,7 @@ export default function Home() {
 
         </div>
 
-        <p id="botname" className="text-xs lg:text-sm font-light uppercase text-center">
+        <p id="botname" className="text-sm md:text-xs lg:text-sm font-light uppercase text-center">
           <span className="font-semibold">afroBalogun</span>, creative developer and <br />
           full-stack engineer.
         </p>
@@ -171,10 +179,15 @@ export default function Home() {
 
       {/* Meta */}
       <div className="flex flex-col sm:flex-row justify-around items-end gap-6 mt-8">
-        <p className="meta-item text-xs hidden md:block">
-          Based in Nigeria · <WatClock /> WAT.<br />
-          <span className="ml-5">Available for work.</span>
-        </p>
+        {/* phones: one block bottom-left, clear of the round MENU button on the right */}
+        <div className="meta-item md:hidden self-start flex flex-col gap-3 font-mono text-xs uppercase tracking-widest">
+          <LagosStamp />
+          <Link href="/works" className="w-fit underline underline-offset-4">See works →</Link>
+        </div>
+        <div className="meta-item text-xs hidden md:flex flex-col gap-2">
+          <LagosStamp />
+          <span className="ml-7">Available for work.</span>
+        </div>
         <div className="meta-item hidden md:block">
           <h6 className="font-semibold text-xs mb-1">Inquiries & Proposals.</h6>
           <p className="text-2xs opacity-80">Reach out to start a technical consultation.</p>
@@ -186,16 +199,30 @@ export default function Home() {
 }
 
 // Live time in Lagos; empty until mounted so the build-time HTML doesn't bake in a stale time
-const watFormat = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Lagos", hour: "2-digit", minute: "2-digit" })
-function WatClock() {
+const lagosFormat = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Lagos", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" })
+function LagosStamp() {
   const [time, setTime] = useState("")
   useEffect(() => {
-    const tick = () => setTime(watFormat.format(new Date()))
+    const tick = () => setTime(lagosFormat.format(new Date()))
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [])
-  return <time className="tabular-nums">{time}</time>
+  // hand angles from the same "HH:MM:SS" string, so the face and the digits always agree
+  const [h, m, sec] = time ? time.split(":").map(Number) : [0, 0, 0]
+  const hand = (deg: number) => ({ transform: `rotate(${deg}deg)`, transformOrigin: "12px 12px" })
+  // a tiny analogue clock (red second hand) beside the time, in the site's mono
+  return (
+    <span className="inline-flex items-center gap-2.5 font-mono font-bold text-xs uppercase tracking-widest">
+      <svg aria-hidden viewBox="0 0 24 24" className={`w-5 h-5 transition-opacity duration-300 ${time ? "" : "opacity-0"}`}>
+        <line x1="12" y1="13.5" x2="12" y2="6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" style={hand((h % 12) * 30 + m * 0.5)} />
+        <line x1="12" y1="13.5" x2="12" y2="2.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={hand(m * 6 + sec * 0.1)} />
+        <line x1="12" y1="15" x2="12" y2="2" stroke="#dc2626" strokeWidth="1.1" strokeLinecap="round" style={hand(sec * 6)} />
+        <circle cx="12" cy="12" r="1.6" fill="#dc2626" />
+      </svg>
+      <span>Lagos — <time className="tabular-nums">{time}</time></span>
+    </span>
+  )
 }
 
 // Typewriter utility
