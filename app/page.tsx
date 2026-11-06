@@ -208,12 +208,20 @@ function LagosStamp() {
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [])
-  // print-caption stamp: a corner rule leads in (dark top, red drop), then "Lagos, 06:15:31" and a small square
+  // hand angles from the same "HH:MM:SS" string, so the face and the digits always agree
+  const [h, m, sec] = time ? time.split(":").map(Number) : [0, 0, 0]
+  const hand = (deg: number) => ({ transform: `rotate(${deg}deg)`, transformOrigin: "12px 12px" })
+  // a tiny analogue clock (red second hand) beside the time, in the site's mono
   return (
-    <span className="inline-flex items-center gap-2 font-serif font-bold text-sm normal-case tracking-normal">
-      <span aria-hidden className="w-5 h-[0.9em] border-t border-l border-t-current border-l-red-600 translate-y-[0.45em]" />
-      <span>Lagos, <time className="tabular-nums">{time}</time></span>
-      <span aria-hidden className="w-1.5 h-1.5 bg-current" />
+    <span className="inline-flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest">
+      <svg aria-hidden viewBox="0 0 24 24" className={`w-5 h-5 transition-opacity duration-300 ${time ? "" : "opacity-0"}`}>
+        <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.35" />
+        <line x1="12" y1="12" x2="12" y2="6.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={hand((h % 12) * 30 + m * 0.5)} />
+        <line x1="12" y1="12" x2="12" y2="4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" style={hand(m * 6 + sec * 0.1)} />
+        <line x1="12" y1="14.5" x2="12" y2="3" stroke="#dc2626" strokeWidth="0.7" strokeLinecap="round" style={hand(sec * 6)} />
+        <circle cx="12" cy="12" r="1" fill="currentColor" />
+      </svg>
+      <span>Lagos — <time className="tabular-nums">{time}</time></span>
     </span>
   )
 }
