@@ -213,13 +213,12 @@ function LagosStamp() {
   const hand = (deg: number) => ({ transform: `rotate(${deg}deg)`, transformOrigin: "12px 12px" })
   // a tiny analogue clock (red second hand) beside the time, in the site's mono
   return (
-    <span className="inline-flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest">
+    <span className="inline-flex items-center gap-2.5 font-mono font-bold text-xs uppercase tracking-widest">
       <svg aria-hidden viewBox="0 0 24 24" className={`w-5 h-5 transition-opacity duration-300 ${time ? "" : "opacity-0"}`}>
-        <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <line x1="12" y1="12" x2="12" y2="6.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={hand((h % 12) * 30 + m * 0.5)} />
-        <line x1="12" y1="12" x2="12" y2="4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" style={hand(m * 6 + sec * 0.1)} />
-        <line x1="12" y1="14.5" x2="12" y2="3" stroke="#dc2626" strokeWidth="0.7" strokeLinecap="round" style={hand(sec * 6)} />
-        <circle cx="12" cy="12" r="1" fill="currentColor" />
+        <line x1="12" y1="13.5" x2="12" y2="6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" style={hand((h % 12) * 30 + m * 0.5)} />
+        <line x1="12" y1="13.5" x2="12" y2="2.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={hand(m * 6 + sec * 0.1)} />
+        <line x1="12" y1="15" x2="12" y2="2" stroke="#dc2626" strokeWidth="1.1" strokeLinecap="round" style={hand(sec * 6)} />
+        <circle cx="12" cy="12" r="1.6" fill="#dc2626" />
       </svg>
       <span>Lagos — <time className="tabular-nums">{time}</time></span>
     </span>
