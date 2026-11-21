@@ -16,8 +16,6 @@ interface PlaygroundWork {
 const DRAG_THRESHOLD = 6 // px moved before a press counts as a drag, not a click
 
 let cachedWorks: PlaygroundWork[] | null = USE_MOCK ? MOCK_PLAYGROUND : null
-// each card's tag colour, in turn
-const ACCENTS = ["bg-lime text-ink", "bg-violet text-cream", "bg-[#FF8A3D] text-ink"]
 
 function buildRows(data: PlaygroundWork[]): PlaygroundWork[][] {
   return [
@@ -225,12 +223,12 @@ export default function Playground() {
         {/* Track: card height follows the viewport; 16:10 suits site screenshots */}
         <div
           ref={trackRef}
-          className="absolute top-[15%] left-4 sm:left-6 lg:left-12 flex flex-col gap-8 will-change-transform [--card-h:clamp(7rem,24vh,15rem)]"
+          className="absolute top-[15%] left-4 sm:left-6 lg:left-12 flex flex-col gap-6 will-change-transform [--card-h:clamp(6.5rem,19vh,13rem)]"
           style={{ width: "max-content" }}
         >
           {rows.map((row, ri) => (
             // second row is offset by half a card so the grid reads as a scattered collection
-            <div key={ri} className={`flex gap-10 ${ri === 1 ? "ml-[calc(var(--card-h)*0.8)]" : ""}`}>
+            <div key={ri} className={`flex gap-8 ${ri === 1 ? "ml-[calc(var(--card-h)*0.8)]" : ""}`}>
               {row.map((work) => (
                 <button
                   type="button"
@@ -252,12 +250,10 @@ export default function Playground() {
                       />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-2xs tracking-widest uppercase">
-                    {work.title && <span className="font-inter font-black text-xs normal-case tracking-tight">{work.title}</span>}
-                    <span className={`px-1.5 py-0.5 truncate transition-transform duration-300 group-hover:-rotate-2 ${ACCENTS[works.indexOf(work) % ACCENTS.length]}`}>
-                      {work.tags?.join(" / ")}
-                    </span>
-                  </div>
+                  {/* a quiet label that lights up lime on hover / focus */}
+                  <span className="w-fit max-w-full truncate px-1 -mx-1 text-2xs tracking-widest uppercase opacity-60 transition-[opacity,background-color] duration-300 group-hover:opacity-100 group-hover:bg-lime group-focus-visible:opacity-100 group-focus-visible:bg-lime">
+                    {work.tags?.join(" / ")}
+                  </span>
                 </button>
               ))}
             </div>
