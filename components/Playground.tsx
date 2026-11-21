@@ -17,12 +17,8 @@ const DRAG_THRESHOLD = 6 // px moved before a press counts as a drag, not a clic
 
 let cachedWorks: PlaygroundWork[] | null = USE_MOCK ? MOCK_PLAYGROUND : null
 
-function buildRows(data: PlaygroundWork[]): PlaygroundWork[][] {
-  return [
-    data.filter((_, i) => i % 2 === 0),
-    data.filter((_, i) => i % 2 === 1),
-  ]
-}
+// the deck: each card sits this far (in card widths) right of and below the one before it
+const STEP_X = 0.55, STEP_Y = 0.2
 
 export default function Playground() {
   const containerRef = useRef<HTMLElement>(null)
@@ -42,13 +38,11 @@ export default function Playground() {
   const dragging = useRef(false)
   const dragMoved = useRef(false)
   const dragStartX = useRef(0)
+  const dragStartY = useRef(0)
   const dragBaseX = useRef(0)
   const isOpen = useRef(false)
 
   const [works, setWorks] = useState<PlaygroundWork[]>(cachedWorks ?? [])
-  const [rows, setRows] = useState<PlaygroundWork[][]>(
-    cachedWorks ? buildRows(cachedWorks) : [[], []]
-  )
   const [selected, setSelected] = useState<PlaygroundWork | null>(null)
   const [scrollable, setScrollable] = useState(false)
 
@@ -60,7 +54,6 @@ export default function Playground() {
       .then((data: PlaygroundWork[]) => {
         cachedWorks = data
         setWorks(data)
-        setRows(buildRows(data))
       })
   }, [])
 
@@ -68,26 +61,28 @@ export default function Playground() {
   useEffect(() => {
     const track = trackRef.current!
     const measure = () => {
-      const overflow = track.scrollWidth + 2 * track.offsetLeft - window.innerWidth
-      maxScroll.current = -Math.max(0, overflow)
+      const last = track.lastElementChild as HTMLElement | null
+      const travel = last ? last.offsetLeft * 0.85 : 0
+      maxScroll.current = -travel
       xTarget.current = Math.max(maxScroll.current, xTarget.current)
-      setScrollable(overflow > 0)
+      setScrollable(travel > 0)
     }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(track)
     window.addEventListener("resize", measure)
     return () => { ro.disconnect(); window.removeEventListener("resize", measure) }
-  }, [rows])
+  }, [works])
 
   useEffect(() => {
     if (!works.length) return
     const id = setTimeout(() => {
       const cards = trackRef.current?.querySelectorAll<HTMLElement>(".card-inner")
       if (!cards?.length) return
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return
       gsap.fromTo(cards,
-        { opacity: 0, y: 24 },
-        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: { amount: 0.3, from: "start" } }
+        { x: (_, el: HTMLElement) => -el.offsetLeft, y: (_, el: HTMLElement) => -el.offsetTop, rotateY: 38, rotateZ: -4 },
+        { x: 0, y: 0, rotateY: 0, rotateZ: 0, duration: 1.1, ease: "power4.out", stagger: 0.05, delay: 0.9 }
       )
     }, 50)
     return () => clearTimeout(id)
@@ -97,7 +92,7 @@ export default function Playground() {
     const tick = () => {
       if (!isOpen.current) {
         xCurrent.current += (xTarget.current - xCurrent.current) * 0.07
-        if (trackRef.current) gsap.set(trackRef.current, { x: xCurrent.current })
+        if (trackRef.current) gsap.set(trackRef.current, { x: xCurrent.current, y: xCurrent.current * (STEP_Y / STEP_X) })
       }
       raf.current = requestAnimationFrame(tick)
     }
@@ -122,7 +117,7 @@ export default function Playground() {
     const onPointerMove = (e: PointerEvent) => {
       if (moveCursor) { moveCursor.x(e.clientX); moveCursor.y(e.clientY) }
       if (!dragging.current) return
-      const dx = e.clientX - dragStartX.current
+      const dx = e.clientX - dragStartX.current + (e.clientY - dragStartY.current)
       if (Math.abs(dx) > DRAG_THRESHOLD) dragMoved.current = true
       xTarget.current = clamp(dragBaseX.current + dx)
     }
@@ -145,6 +140,7 @@ export default function Playground() {
     dragging.current = true
     dragMoved.current = false
     dragStartX.current = e.clientX
+    dragStartY.current = e.clientY
     dragBaseX.current = xTarget.current
   }
 
@@ -220,43 +216,32 @@ export default function Playground() {
         onPointerDown={handlePointerDown}
         className="relative w-screen h-screen overflow-hidden bg-cream text-ink font-mono select-none touch-none cursor-grab active:cursor-grabbing"
       >
-        {/* Track: card height follows the viewport; 16:10 suits site screenshots */}
+        {/* the deck: rounded square cards cascading down to the right, each over the one before; a card lifts on hover
+            and its tags show on a lime label above it */}
         <div
           ref={trackRef}
-          className="absolute top-[15%] left-4 sm:left-6 lg:left-12 flex flex-col gap-6 will-change-transform [--card-h:clamp(6.5rem,19vh,13rem)]"
-          style={{ width: "max-content" }}
+          className="absolute top-[12%] left-[22%] md:left-[30%] will-change-transform [perspective:1400px] [--s:clamp(8rem,22vh,15rem)]"
         >
-          {rows.map((row, ri) => (
-            // second row is offset by half a card so the grid reads as a scattered collection
-            <div key={ri} className={`flex gap-8 ${ri === 1 ? "ml-[calc(var(--card-h)*0.8)]" : ""}`}>
-              {row.map((work) => (
-                <button
-                  type="button"
-                  key={work._id}
-                  onClick={() => handleCardClick(work)}
-                  onPointerEnter={() => showCursor(true)}
-                  onPointerLeave={() => showCursor(false)}
-                  aria-label={work.title ? `Open ${work.title}` : "Open playground piece"}
-                  className="card-inner group flex flex-col gap-2 text-left pointer-fine:cursor-none"
-                  style={{ opacity: 0 }}
-                >
-                  <div className="h-(--card-h) aspect-16/10 overflow-hidden bg-secondary/10">
-                    {work.img && (
-                      <img
-                        src={work.img}
-                        alt=""
-                        draggable={false}
-                        className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
-                      />
-                    )}
-                  </div>
-                  {/* a quiet label that lights up lime on hover / focus */}
-                  <span className="w-fit max-w-full truncate px-1 -mx-1 text-2xs tracking-widest uppercase opacity-60 transition-[opacity,background-color] duration-300 group-hover:opacity-100 group-hover:bg-lime group-focus-visible:opacity-100 group-focus-visible:bg-lime">
-                    {work.tags?.join(" / ")}
-                  </span>
-                </button>
-              ))}
-            </div>
+          {works.map((work, i) => (
+            <button
+              type="button"
+              key={work._id}
+              onClick={() => handleCardClick(work)}
+              onPointerEnter={() => showCursor(true)}
+              onPointerLeave={() => showCursor(false)}
+              aria-label={work.title ? `Open ${work.title}` : "Open playground piece"}
+              className="card-inner group absolute z-(--z) hover:z-50 focus-visible:z-50 text-left outline-none pointer-fine:cursor-none"
+              style={{ left: `calc(var(--s) * ${i * STEP_X})`, top: `calc(var(--s) * ${i * STEP_Y})`, ["--z" as string]: i }}
+            >
+              <span className="absolute bottom-full left-0 mb-2 max-w-[calc(var(--s)*1.4)] truncate bg-lime px-1.5 py-0.5 text-2xs tracking-widest uppercase opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
+                {work.tags?.join(" / ")}
+              </span>
+              <div className="size-(--s) overflow-hidden rounded-[1.1rem] bg-ink/10 shadow-[0_1.5rem_3rem_-1.5rem_rgb(0_0_0/0.45)] transition-transform duration-500 ease-[cubic-bezier(.34,1.5,.64,1)] group-hover:-translate-x-2 group-hover:-translate-y-4 group-focus-visible:-translate-y-4 group-focus-visible:ring-2 group-focus-visible:ring-violet">
+                {work.img && (
+                  <img src={work.img} alt="" draggable={false} className="size-full object-cover object-top" />
+                )}
+              </div>
+            </button>
           ))}
         </div>
 
