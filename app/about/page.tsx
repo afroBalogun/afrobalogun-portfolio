@@ -3,8 +3,8 @@ import { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "About — Obasa Temiloluwa",
-  description: "Creative developer from Nigeria. I build and design thoughtful digital experiences across frontend, fullstack, and interactive web.",
-  keywords: ["Obasa Temiloluwa", "about", "creative developer", "frontend developer", "fullstack developer", "Nigeria"],
+  description: "Hi, I'm Temi, a designer and developer in Lagos. I design digital products (sites, apps, pipelines) and build them myself, from the first sketch to launch.",
+  keywords: ["Obasa Temiloluwa", "about", "designer and developer", "frontend developer", "fullstack developer", "Nigeria"],
 }
 
 export default function Page(){

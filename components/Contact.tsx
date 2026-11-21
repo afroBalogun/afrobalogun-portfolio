@@ -1,165 +1,66 @@
 "use client"
 
-import Link from "next/link"
-import { useRef, useLayoutEffect } from "react"
-import gsap from "gsap"
+// Contact, in the site's language, one screen tall: a mono top line (label, where I work from), LET'S TALK in the tall condensed letters with
+// the hero's highlight labels on it, the email large with a lime marker that fills on hover, the other ways in as big
+// rows that flood with their colour on hover, and a bottom bar. The rows and email are plain links (keyboard-first).
 
-const contacts = [
-  { id: "01", label: "temiruto14@gmail.com", href: "mailto:temiruto14@gmail.com", col: "col-start-1", row: "row-start-2" },
-  { id: "02", label: "LinkedIn",              href: "https://www.linkedin.com/in/temiloluwa-obasa-786b7817b/", col: "md:col-start-2", row: "row-start-3 md:row-start-2" },
-  { id: "03", label: "+234 706 967 5136",     href: "tel:+2347069675136",           col: "md:col-start-3", row: "row-start-4 md:row-start-3" },
-  { id: "04", label: "github",                href: "https://github.com/afroBalogun",           col: "md:col-start-2", row: "row-start-5 md:row-start-4" },
-  { id: "05", label: "résumé (pdf)",          href: "/Obasa-Temiloluwa-Resume.pdf",            col: "md:col-start-3", row: "row-start-6 md:row-start-4", file: true },
+const LINKS = [
+  { label: "LinkedIn", detail: "Temiloluwa Obasa", href: "https://www.linkedin.com/in/temiloluwa-obasa-786b7817b/", hover: "hover:bg-violet hover:text-cream focus-visible:bg-violet focus-visible:text-cream", external: true },
+  { label: "GitHub", detail: "afroBalogun", href: "https://github.com/afroBalogun", hover: "hover:bg-lime focus-visible:bg-lime", external: true },
+  { label: "Phone", detail: "+234 706 967 5136", href: "tel:+2347069675136", hover: "hover:bg-[#FF8A3D] focus-visible:bg-[#FF8A3D]" },
+  { label: "Résumé", detail: "PDF", href: "/Obasa-Temiloluwa-Resume.pdf", hover: "hover:bg-lime focus-visible:bg-lime", external: true },
 ]
 
 export default function Contact() {
-  const mainRef   = useRef<HTMLElement>(null)
-  const ghostRef  = useRef<HTMLSpanElement>(null)
-  const labelRef  = useRef<HTMLDivElement>(null)
-  const itemRefs  = useRef<(HTMLDivElement | null)[]>([])
-  const cursorRef = useRef<HTMLDivElement>(null)
-  const cursorX   = useRef(0)
-  const cursorY   = useRef(0)
-  const raf       = useRef<number>(null)
-
-  /* ── custom cursor lerp ── */
-  useLayoutEffect(() => {
-    const cursor = cursorRef.current!
-    let mouseX = 0, mouseY = 0
-
-    const onMove = (e: MouseEvent) => { mouseX = e.clientX; mouseY = e.clientY }
-    window.addEventListener("mousemove", onMove)
-
-    const tick = () => {
-      cursorX.current += (mouseX - cursorX.current) * 0.12
-      cursorY.current += (mouseY - cursorY.current) * 0.12
-      gsap.set(cursor, { x: cursorX.current - 4, y: cursorY.current - 4 })
-      raf.current = requestAnimationFrame(tick)
-    }
-    raf.current = requestAnimationFrame(tick)
-
-    return () => {
-      window.removeEventListener("mousemove", onMove)
-      cancelAnimationFrame(raf.current!)
-    }
-  }, [])
-
-  /* ── entrance animation ── */
-  useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      // ghost text
-      gsap.from(ghostRef.current, {
-        opacity: 0, duration: 2.5, ease: "power2.out", delay: 0.2,
-      })
-
-      // label
-      gsap.from(labelRef.current, {
-        y: 16, opacity: 0, duration: 0.9, ease: "power3.out", delay: 0.3,
-      })
-
-      // staggered links
-      gsap.from(itemRefs.current, {
-        y: 24, opacity: 0, duration: 0.8, ease: "power3.out",
-        stagger: 0.12, delay: 0.45,
-      })
-    }, mainRef)
-
-    return () => ctx.revert()
-  }, [])
-
-  /* ── magnetic hover ── */
-  const handleMouseMove = (e: React.MouseEvent, i: number) => {
-    const el = itemRefs.current[i]
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const dx = (e.clientX - (rect.left + rect.width  / 2)) * 0.28
-    const dy = (e.clientY - (rect.top  + rect.height / 2)) * 0.28
-    gsap.to(el, { x: dx, y: dy, duration: 0.35, ease: "power2.out" })
-
-    // cursor expands on link hover
-    gsap.to(cursorRef.current, { scale: 4, duration: 0.3, ease: "power2.out" })
-  }
-
-  const handleMouseLeave = (i: number) => {
-    gsap.to(itemRefs.current[i], { x: 0, y: 0, duration: 0.65, ease: "elastic.out(1, 0.4)" })
-    gsap.to(cursorRef.current,   { scale: 1, duration: 0.3, ease: "power2.out" })
-  }
-
   return (
-    <>
-      {/* custom cursor */}
-      <div
-        ref={cursorRef}
-        className="fixed top-0 left-0 z-[100] w-2 h-2 rounded-full bg-current pointer-events-none mix-blend-difference"
-        style={{ willChange: "transform" }}
-      />
+    <main className="h-svh min-h-[34rem] overflow-hidden bg-cream text-ink flex flex-col px-4 sm:px-6 md:px-8 lg:px-12 pt-24 md:pt-28 pb-6">
+      {/* top line */}
+      <div className="flex items-start justify-between gap-6 font-mono text-2xs sm:text-xs uppercase tracking-widest">
+        <p><span className="text-[#FF8A3D]">/</span> contact</p>
+        <p className="text-right">Based in Lagos,<br />working worldwide</p>
+      </div>
 
-      <main
-        ref={mainRef}
-        className="relative min-h-screen font-mono p-8 md:p-20 flex flex-col justify-end text-neutral-800 overflow-hidden cursor-none"
+      {/* headline, with the hero's highlight labels on it */}
+      <div className="relative mt-[3svh] w-fit">
+        <h1 className="font-display font-extrabold [font-stretch:62%] uppercase leading-[0.82] text-[clamp(3.5rem,min(15vw,19svh),30rem)]">Let&apos;s talk</h1>
+        <p aria-hidden className="max-md:mt-4 md:absolute md:right-0 md:-top-[0.4em] md:translate-x-[10%] font-inter font-black uppercase leading-[1.25] tracking-tight text-[clamp(0.85rem,min(1.5vw,2.4svh),2.5rem)] md:text-right">
+          <span className="relative inline-block bg-lime px-[0.2em] -rotate-2">Available<sup className="absolute -right-[0.55em] -top-[0.15em] text-violet text-[0.8em]">*</sup></span><br />
+          <span className="bg-violet text-cream px-[0.2em]">for new projects</span>
+        </p>
+      </div>
+
+      {/* the email, the main way in */}
+      <a
+        href="mailto:temiruto14@gmail.com"
+        className="mt-[3.5svh] w-fit font-display font-semibold tracking-tight text-[clamp(1.4rem,min(3.6vw,5.5svh),7rem)] leading-none bg-no-repeat bg-bottom bg-[length:100%_30%] bg-[linear-gradient(#BCF975,#BCF975)] transition-[background-size] duration-500 ease-[cubic-bezier(.65,0,.35,1)] hover:bg-[length:100%_100%] focus-visible:bg-[length:100%_100%] outline-none"
       >
-        {/* ghost background text */}
-        <span
-          ref={ghostRef}
-          aria-hidden
-          className="absolute bottom-0 left-0 leading-none font-mono font-bold text-[22vw] tracking-tighter text-current opacity-[0.04] pointer-events-none select-none whitespace-nowrap"
-        >
-          contact
-        </span>
+        temiruto14@gmail.com
+      </a>
 
-        <div className="relative grid grid-cols-1 md:grid-cols-3 grid-rows-6 md:grid-rows-4 gap-y-10 md:gap-y-16 items-start">
-
-          {/* label */}
-          <div ref={labelRef} className="col-start-1 row-start-1 flex flex-col gap-1">
-            <p className="text-2xs tracking-[0.2em] opacity-40 uppercase">(contact)</p>
-            <p className="text-2xs tracking-wide opacity-25 mt-2">— available for work</p>
-          </div>
-
-          {/* links */}
-          {contacts.map((c, i) => (
-            <div
-              key={c.id}
-              ref={(el) => { itemRefs.current[i] = el }}
-              className={`${c.col} ${c.row} flex flex-col gap-2`}
-              onMouseMove={(e) => handleMouseMove(e, i)}
-              onMouseLeave={() => handleMouseLeave(i)}
-              style={{ willChange: "transform" }}
+      {/* the other ways in */}
+      <ul className="mt-[4svh] border-t-2 border-ink">
+        {LINKS.map((l) => (
+          <li key={l.label} className="border-b border-ink/25">
+            <a
+              href={l.href}
+              {...(l.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              className={`group flex items-center justify-between gap-6 px-2 -mx-2 py-[1.3svh] outline-none transition-colors duration-300 ${l.hover}`}
             >
-              <span className="text-2xs tracking-widest opacity-30 leading-none">
-                — {c.id}
+              <span className="font-display font-extrabold [font-stretch:62%] uppercase leading-none text-[clamp(1.4rem,min(2.6vw,4.2svh),4.5rem)]">{l.label}</span>
+              <span className="flex items-center gap-4 font-mono text-xs uppercase tracking-widest">
+                <span className="max-sm:hidden opacity-70">{l.detail}</span>
+                <span aria-hidden className="text-base transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">↗</span>
               </span>
-              {"file" in c ? (
-                // static file: plain <a> (Next's <Link> would try to route it), opened in a new tab
-                <a
-                  href={c.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm md:text-base underline underline-offset-4 opacity-70 hover:opacity-100 transition-opacity duration-200"
-                >
-                  {c.label}
-                </a>
-              ) : (
-                <Link
-                  href={c.href}
-                  className="text-sm md:text-base underline underline-offset-4 opacity-70 hover:opacity-100 transition-opacity duration-200"
-                >
-                  {c.label}
-                </Link>
-              )}
-            </div>
-          ))}
-        </div>
+            </a>
+          </li>
+        ))}
+      </ul>
 
-        {/* bottom bar */}
-        <div className="relative mt-16 pt-5 border-t border-current/10 flex justify-between items-end">
-          <span className="text-2xs tracking-widest opacity-20">
-            © {new Date().getFullYear()}
-          </span>
-          <span className="text-2xs tracking-widest opacity-20">
-            afroBalogun
-          </span>
-        </div>
-      </main>
-    </>
+      {/* bottom bar */}
+      <div className="mt-auto pt-6 flex justify-between items-end font-mono text-2xs uppercase tracking-widest">
+        <span className="opacity-60">© {new Date().getFullYear()}</span>
+        <span><span className="text-[#FF8A3D]">/</span>afroBalogun</span>
+      </div>
+    </main>
   )
 }

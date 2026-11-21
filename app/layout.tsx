@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Archivo, Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import PageIntro from "@/components/PageIntro";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,13 +20,20 @@ const inter = Inter({
 
 })
 
+// display face for big titles; variable weight and width (the uppercase poster titles use it condensed)
+const display = Archivo({
+  variable: "--font-display",
+  subsets: ["latin"],
+  axes: ["wdth"],
+})
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://afrobalogun.com"),
   title: {
-    default: "afroBalogun",
+    default: "Obasa Temiloluwa — Design & Full-stack Engineer",
     template: "%s | afroBalogun",
   },
-  description: "Creative developer portfolio.",
+  description: "Design and full-stack engineer in Lagos building products end to end, from interface and motion to APIs, payments and data. React, Next.js, GSAP, Node.",
   keywords: [
     "Obasa Temiloluwa",
     "creative developer",
@@ -39,6 +47,11 @@ export const metadata: Metadata = {
     "React developer",
     "Next.js developer",
   ],
+  openGraph: {
+    siteName: "afroBalogun",
+    title: "Obasa Temiloluwa — Design & Full-stack Engineer",
+    description: "Design and full-stack engineer in Lagos building products end to end, from interface and motion to APIs, payments and data.",
+  },
   twitter: {
     card: "summary_large_image",
   }
@@ -52,9 +65,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased bg-primary text-secondary ${inter.variable} font-inter`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased bg-primary text-secondary ${inter.variable} ${display.variable} font-inter`}
     >
       <body className="min-h-full flex flex-col">
+        <PageIntro />
         <Navbar />
         {children}</body>
     </html>

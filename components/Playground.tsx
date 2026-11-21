@@ -2,6 +2,7 @@
 import { useRef, useEffect, useState, useCallback } from "react"
 import gsap from "gsap"
 import Link from "next/link"
+import { USE_MOCK, MOCK_PLAYGROUND } from "@/lib/mock"
 
 interface PlaygroundWork {
   _id: string
@@ -14,7 +15,9 @@ interface PlaygroundWork {
 
 const DRAG_THRESHOLD = 6 // px moved before a press counts as a drag, not a click
 
-let cachedWorks: PlaygroundWork[] | null = null
+let cachedWorks: PlaygroundWork[] | null = USE_MOCK ? MOCK_PLAYGROUND : null
+// each card's tag colour, in turn
+const ACCENTS = ["bg-lime text-ink", "bg-violet text-cream", "bg-[#FF8A3D] text-ink"]
 
 function buildRows(data: PlaygroundWork[]): PlaygroundWork[][] {
   return [
@@ -211,14 +214,13 @@ export default function Playground() {
     if (Math.abs(dx) > 50) { swiped.current = true; step(dx < 0 ? 1 : -1) }
   }
 
-  const selectedIndex = selected ? works.findIndex((w) => w._id === selected._id) : -1
 
   return (
     <>
       <main
         ref={containerRef}
         onPointerDown={handlePointerDown}
-        className="relative w-screen h-screen overflow-hidden font-mono select-none touch-none cursor-grab active:cursor-grabbing"
+        className="relative w-screen h-screen overflow-hidden bg-cream text-ink font-mono select-none touch-none cursor-grab active:cursor-grabbing"
       >
         {/* Track: card height follows the viewport; 16:10 suits site screenshots */}
         <div
@@ -236,7 +238,7 @@ export default function Playground() {
                   onClick={() => handleCardClick(work)}
                   onPointerEnter={() => showCursor(true)}
                   onPointerLeave={() => showCursor(false)}
-                  aria-label={work.title ? `Open ${work.title}` : `Open playground piece ${works.indexOf(work) + 1}`}
+                  aria-label={work.title ? `Open ${work.title}` : "Open playground piece"}
                   className="card-inner group flex flex-col gap-2 text-left pointer-fine:cursor-none"
                   style={{ opacity: 0 }}
                 >
@@ -250,9 +252,9 @@ export default function Playground() {
                       />
                     )}
                   </div>
-                  <div className="flex justify-between gap-4 text-2xs tracking-widest uppercase">
-                    <span className="opacity-40">{String(works.indexOf(work) + 1).padStart(2, "0")}</span>
-                    <span className="opacity-0 group-hover:opacity-60 group-focus-visible:opacity-60 transition-opacity duration-300 truncate">
+                  <div className="flex items-center gap-2 text-2xs tracking-widest uppercase">
+                    {work.title && <span className="font-inter font-black text-xs normal-case tracking-tight">{work.title}</span>}
+                    <span className={`px-1.5 py-0.5 truncate transition-transform duration-300 group-hover:-rotate-2 ${ACCENTS[works.indexOf(work) % ACCENTS.length]}`}>
                       {work.tags?.join(" / ")}
                     </span>
                   </div>
@@ -262,20 +264,23 @@ export default function Playground() {
           ))}
         </div>
 
-        {/* Title + hint, styled like /works */}
-        <div className="absolute bottom-[8%] left-4 sm:left-6 lg:left-12 flex flex-col gap-3 pointer-events-none">
-          <h2 className="font-semibold text-4xl tracking-[0.2em] opacity-20">playground</h2>
-          <p className="text-2xs tracking-widest uppercase opacity-50">
-            {works.length > 0 && `${String(works.length).padStart(2, "0")} pieces`}
-            {scrollable && " · drag or scroll →"}
-          </p>
+        {/* title + hint, in the home hero's language */}
+        <div className="absolute bottom-[5%] left-4 sm:left-6 lg:left-12 flex flex-col gap-3 pointer-events-none">
+          <p className="text-xs tracking-widest uppercase"><span className="text-[#FF8A3D]">/</span> playground</p>
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+            <h1 className="font-display font-extrabold [font-stretch:62%] uppercase leading-[0.82] text-[clamp(4rem,13vw,24rem)]">Playground</h1>
+            <p className="pb-[1vw] font-inter font-black uppercase leading-[1.25] tracking-tight text-[clamp(0.9rem,1.5vw,2.5rem)]">
+              <span className="relative inline-block bg-lime px-[0.2em] -rotate-2">Experiments<sup className="text-violet text-[0.8em]">*</sup></span><br />
+              <span className="bg-violet text-cream px-[0.2em]">{scrollable ? "Drag or scroll →" : "Random & rejected"}</span>
+            </p>
+          </div>
         </div>
 
         {/* "view" cursor, mouse/pen only */}
         <div
           ref={cursorRef}
           aria-hidden
-          className="hidden pointer-fine:flex fixed top-0 left-0 z-40 -ml-8 -mt-8 w-16 h-16 rounded-full bg-secondary text-primary items-center justify-center text-2xs tracking-widest uppercase pointer-events-none scale-0"
+          className="hidden pointer-fine:flex fixed top-0 left-0 z-40 -ml-8 -mt-8 w-16 h-16 rounded-full bg-lime text-ink items-center justify-center text-2xs tracking-widest uppercase pointer-events-none scale-0"
         >
           view
         </div>
@@ -287,14 +292,12 @@ export default function Playground() {
           ref={modalRef}
           role="dialog"
           aria-modal="true"
-          aria-label={selected.title ?? `Playground piece ${selectedIndex + 1}`}
+          aria-label={selected.title ?? "Playground piece"}
           className="fixed inset-0 z-50 flex flex-col gap-4 sm:gap-6 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 bg-primary/95 backdrop-blur-sm font-mono select-none"
           style={{ opacity: 0 }}
         >
           <div className="flex items-center justify-between text-2xs tracking-widest uppercase">
-            <span className="opacity-50 tabular-nums">
-              {String(selectedIndex + 1).padStart(2, "0")} / {String(works.length).padStart(2, "0")}
-            </span>
+            <span className="text-[#FF8A3D]">/ playground</span>
             <button ref={closeRef} onClick={handleClose} className="opacity-60 hover:opacity-100 transition-opacity">
               close <span className="hidden pointer-fine:inline opacity-50">(esc)</span>
             </button>
@@ -326,7 +329,7 @@ export default function Playground() {
           <div className="flex items-center justify-between gap-6 text-2xs tracking-widest uppercase">
             <span className="truncate">
               {selected.title && <span className="mr-3">{selected.title}</span>}
-              <span className="opacity-60">{selected.tags?.join(" / ")}</span>
+              <span className="bg-lime px-1.5 py-0.5">{selected.tags?.join(" / ")}</span>
             </span>
             {selected.link && (
               <Link

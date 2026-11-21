@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #EBEBEB;
-  --foreground: #1E1E1E;
+  --background: #F6F5F5;
+  --foreground: #24201F;
 }
 
 /* 16px up to 1920 wide, then grows with the viewport so 1440p/4K keep the same proportions */
 html {
   font-size: max(16px, calc(100vw / 120));
+  /* keeps the scrollbar's space when the loader locks scrolling, so the page doesn't jump when it unlocks */
+  scrollbar-gutter: stable;
 }
 
 @theme inline {
@@ -16,8 +18,17 @@ html {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-inter: var(--font-inter);
-  --color-primary: #EBEBEB;
-  --color-secondary: #1E1E1E;
+  --font-display: var(--font-display);
+  --color-primary: #F6F5F5;
+  --color-secondary: #24201F;
+
+  /* the palette (Nov 2026): off-white paper, warm black ink, lime, and a little violet for spice.
+     Lime is too light for text on the paper, so coloured text on light sections uses violet; lime goes on blocks
+     and as text on the dark sections. */
+  --color-cream: #F6F5F5;
+  --color-ink: #24201F;
+  --color-lime: #BCF975;
+  --color-violet: #7C4DFF;
 
   /* smallest text on the site: 11px at the 16px root */
   --text-2xs: 0.6875rem;
@@ -58,6 +69,18 @@ html {
     10% { transform: none; }
   }
 
+  /* home hero: the footer marquee, and the grid squares that blink on and off */
+  --animate-marquee: marquee 24s linear infinite;
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  --animate-cell-blink: cell-blink 6s ease-in-out infinite;
+  @keyframes cell-blink {
+    0%, 100% { opacity: 0; }
+    20%, 60% { opacity: 1; }
+  }
+
   --animate-breathe: breathe 5s ease-in-out infinite;
   @keyframes breathe {
     0%, 100% { transform: scaleY(1); }
@@ -75,4 +98,35 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* page intro (components/PageIntro.tsx): the ink panel holds while the name rises and the bar fills, then it and the
+   colour bands behind it slide up a beat apart */
+@keyframes intro-out { 0%, 55% { translate: 0 0; } 100% { translate: 0 -100%; } }
+@keyframes intro-word { from { translate: 0 110%; } to { translate: 0 0; } }
+@keyframes intro-bar { from { scale: 0 1; } to { scale: 1 1; } }
+@keyframes intro-fade { 0%, 40% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+.page-intro-band { animation: intro-out 1.4s cubic-bezier(.76, 0, .24, 1) both; }
+.page-intro-letter { animation: intro-word .7s cubic-bezier(.22, 1, .36, 1) both; }
+.page-intro-bar { animation: intro-bar .7s cubic-bezier(.65, 0, .35, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .page-intro-band { animation: intro-fade .8s ease forwards; }
+  .page-intro-letter, .page-intro-bar { animation: none; }
+}
+
+/* About scene (components/AboutScene.tsx): the line drawing traces itself on when the page opens */
+@keyframes ln-draw { to { stroke-dashoffset: 0; } }
+.about-scene .ln { stroke-dasharray: 1; stroke-dashoffset: 1; animation: ln-draw 2.4s cubic-bezier(.6, 0, .2, 1) .9s forwards; }
+@media (prefers-reduced-motion: reduce) { .about-scene .ln { stroke-dashoffset: 0; animation: none; } }
+
+/* About opener (components/AboutScene.tsx): label highlights wipe in, the content under them rises, the tags pop in */
+@keyframes about-hl { to { background-size: 100% 100%; } }
+@keyframes about-rise { from { opacity: 0; translate: 0 0.75rem; } to { opacity: 1; translate: 0 0; } }
+@keyframes about-pop { from { opacity: 0; scale: 0.6; } to { opacity: 1; scale: 1; } }
+.about-hl { padding: 0.15em 0.4em; margin-left: -0.4em; background: linear-gradient(var(--hl), var(--hl)) no-repeat left / 0% 100%; animation: about-hl 0.6s cubic-bezier(.65, 0, .35, 1) forwards; }
+.about-rise { animation: about-rise 0.7s cubic-bezier(.22, 1, .36, 1) both; }
+.about-pop { animation: about-pop 0.6s cubic-bezier(.34, 1.6, .64, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .about-hl { background-size: 100% 100%; animation: none; }
+  .about-rise, .about-pop { animation: none; }
 }

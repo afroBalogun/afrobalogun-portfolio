@@ -1,11 +1,11 @@
 "use client"
 import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
-import { ScrollTrigger, SplitText } from "gsap/all"
+import { Draggable, InertiaPlugin, ScrollTrigger, SplitText } from "gsap/all"
 import { useRef, useState } from "react"
-import { Courier_Prime } from "next/font/google"
+import AboutScene from "@/components/AboutScene"
 
-gsap.registerPlugin(useGSAP, SplitText, ScrollTrigger)
+gsap.registerPlugin(useGSAP, SplitText, ScrollTrigger, Draggable, InertiaPlugin)
 
 // hobby showcase: where each cover lands when its category is hovered (centre point, % of the section) and its tilt;
 // slots ring the card cluster so the covers frame it instead of covering it
@@ -17,88 +17,47 @@ const SHOWCASE_SLOTS = [
 // pointer type of the latest press, so a click can tell a touch tap from a mouse click
 let lastPointerType = "mouse"
 
-// typewriter face for the stack section only
-const courier = Courier_Prime({ weight: ["400", "700"], subsets: ["latin"] })
+const POSTER = "font-display font-extrabold [font-stretch:62%] uppercase"
 
-// ——— typewritten-document pieces for the stack section ———
-// hand-drawn strokes are visible by default; the scroll animation draws them in (pathLength=1 makes the dash math 0..1)
-const strokeProps = { className: "stack-stroke", fill: "none", stroke: "currentColor", strokeWidth: 1.2, strokeLinecap: "round" as const, pathLength: 1, strokeDasharray: "1", vectorEffect: "non-scaling-stroke" as const }
+// the toolkit: one draggable tag per tool, coloured by kind
+const TOOLKIT = [
+  ...["React", "Next.js", "Tailwind CSS", "GSAP", "React Native", "TypeScript"].map((t) => ({ t, kind: "front" })),
+  ...["Node.js", "Express", "MongoDB", "PostgreSQL", "Spring Boot"].map((t) => ({ t, kind: "back" })),
+  ...["Figma", "Framer", "Git", "Vercel", "Linux", "AWS"].map((t) => ({ t, kind: "tools" })),
+]
+const TAG_COLOURS: Record<string, string> = { front: "bg-lime text-ink", back: "bg-violet text-cream", tools: "bg-[#FF8A3D] text-ink" }
+const TAG_TILT = [-8, 5, -3, 9, -6, 2, 7, -10, 4, -2, 6, -7, 3, -5, 8, -4, 1]
 
-function Scribble() {
-  return (
-    <svg aria-hidden viewBox="0 0 240 10" preserveAspectRatio="none" className="absolute left-0 -bottom-1.5 w-full h-2 overflow-visible">
-      <path d="M2 6 C 40 2, 80 9, 120 5 S 200 7, 238 3" {...strokeProps} />
-    </svg>
-  )
-}
-
-const FRONTEND = ["React.js", "Next.js", "Tailwind CSS", "GSAP", "React Native", "CSS3"]
-const BACKEND = ["Node.js", "Express.js", "MongoDB", "PostgreSQL", "Spring Boot"]
-const TOOLS = ["Figma", "Framer", "Git", "Vercel", "Linux", "REST APIs", "AWS"]
-
-// ——— poster backdrop for the stack: faint grid and a giant wordmark ———
-function StackPoster() {
-  return (
-    <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none select-none">
-      {/* poster grid */}
-      <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:12.5%_16.666%]" />
-      {/* giant wordmark */}
-      <p className="absolute inset-x-0 bottom-[12%] text-center font-inter font-semibold uppercase leading-none tracking-tight text-[22vw] opacity-[0.05]">stack</p>
-    </div>
-  )
-}
-
-// redacted phrase for the background "case file": an ink-coloured background behind ink-coloured text reads as a
-// black bar; GSAP shrinks the background to reveal the words. box-decoration-break gives each wrapped line its own bar.
-function Redact({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="bg-redact px-1 -mx-1 [box-decoration-break:clone] bg-no-repeat bg-left bg-[length:100%_100%] bg-[linear-gradient(var(--color-secondary),var(--color-secondary))] motion-reduce:bg-none">
-      {children}
-    </span>
-  )
-}
-
-function NumberedHeading({ n, children }: { n: number; children: React.ReactNode }) {
-  return (
-    <p className="stack-line grid grid-cols-[1.5rem_1fr] sm:grid-cols-[3rem_1fr] mt-10 font-bold">
-      <span>{n}</span>
-      <span>{children}</span>
-    </p>
-  )
-}
-
-function ToolList({ tools, bracket }: { tools: string[]; bracket?: boolean }) {
-  return (
-    <div className="relative mt-3 px-10 sm:pl-24 sm:pr-16">
-      {bracket && (
-        <svg aria-hidden viewBox="0 0 8 100" preserveAspectRatio="none" className="absolute left-5 sm:left-16 top-0 w-2 h-full overflow-visible">
-          <path d="M6 2 C 2 25, 7 55, 3 98" {...strokeProps} />
-        </svg>
-      )}
-      <ul className="grid grid-cols-2 gap-x-6 gap-y-1">
-        {tools.map((tool) => <li key={tool} className="stack-line">{tool}</li>)}
-      </ul>
-    </div>
-  )
-}
+// Exhibit A: the quote broken across a 10 x 13 grid, pictures of things I love (and things I made) in some cells.
+// c/r: grid column/row to start at, w/h: cells spanned
+type Piece = { c: number; r: number; w: number; h: number }
+const EXHIBIT_TEXT: (Piece & { t: string })[] = [
+  { c: 2, r: 2, w: 4, h: 2, t: "Everything around you" },
+  { c: 6, r: 5, w: 4, h: 2, t: "that you call life" },
+  { c: 3, r: 9, w: 4, h: 2, t: "was made by people" },
+  { c: 6, r: 11, w: 4, h: 3, t: "that were no smarter than you." },
+]
+const EXHIBIT_PICS: (Piece & { src: string; fit?: "contain" })[] = [
+  { c: 7, r: 2, w: 2, h: 3, src: "/graduation.jpeg" },
+  { c: 10, r: 2, w: 1, h: 1, src: "/sticker.jpg" },
+  { c: 9, r: 4, w: 2, h: 1, src: "/cases/goldenpages.jpg" },
+  { c: 1, r: 4, w: 2, h: 2, src: "/naruto.jpg" },
+  { c: 4, r: 5, w: 2, h: 3, src: "/frank.jpeg" },
+  { c: 2, r: 6, w: 1, h: 1, src: "/earphones.png", fit: "contain" },
+  { c: 1, r: 7, w: 2, h: 3, src: "/one-piece.jpg" },
+  { c: 8, r: 7, w: 2, h: 2, src: "/tyler.jpeg" },
+  { c: 6, r: 8, w: 1, h: 1, src: "/subject.jpg" },
+  { c: 10, r: 9, w: 1, h: 1, src: "/read.png", fit: "contain" },
+  { c: 7, r: 9, w: 2, h: 2, src: "/cases/truelife.jpg" },
+  { c: 2, r: 11, w: 2, h: 2, src: "/stack-computer.png", fit: "contain" },
+  { c: 4, r: 12, w: 2, h: 2, src: "/sonder-son.jpeg" },
+  { c: 10, r: 13, w: 1, h: 1, src: "/chainsaw.jpeg" },
+]
+const at = (x: Piece) => ({ gridColumn: `${x.c} / span ${x.w}`, gridRow: `${x.r} / span ${x.h}` })
 
 
 
 export default function About() {
-  const me = [
-    {
-      title: "What I Do",
-      description: "I'm a creative designer and developer creating interactive websites with a minimalistic approach that leave a lasting impression."
-    },
-    {
-      title: "My Origin",
-      description: "Creativity has always been part of who I am along with a deep curiosity about how things work. Finding web development gave me a path to channel both, while learning how real-world applications are designed and built."
-    },
-    {
-      title: "My Approach",
-      description: "I believe in the power of simplicity and intentionality. I strive to create work that is not only visually appealing but also purposeful and meaningful, with a focus on user experience and storytelling."
-    }
-  ]
 
   // expertise index: big titles; each row's own image follows the cursor on hover
   const expertise = [
@@ -107,6 +66,17 @@ export default function About() {
     { title: "Motion", img: "/expertise-motion.jpg", description: "The last layer: transitions, micro-interactions and scroll moments that make a site feel alive without getting in its way." },
   ]
   const [hoverExp, setHoverExp] = useState<number | null>(null)
+  // Exhibit A: a lime square snaps to the grid cell under the pointer
+  const moveCell = (e: React.PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    const col = Math.min(9, Math.floor(((e.clientX - r.left) / r.width) * 10))
+    const row = Math.min(12, Math.floor(((e.clientY - r.top) / r.height) * 13))
+    const cell = cellRef.current!
+    cell.style.left = `${col * 10}%`
+    cell.style.top = `${(row * 100) / 13}%`
+    cell.style.opacity = "1"
+  }
+
   // the trailing photo belongs to a hovering mouse/pen only; keyboard focus reveals the text without it
   const [expPointer, setExpPointer] = useState(false)
   const expCursorRef = useRef<HTMLDivElement>(null)
@@ -204,11 +174,11 @@ export default function About() {
     },
   }
 
-  const backgroundRef = useRef<HTMLParagraphElement>(null)
   const expertiseRef = useRef<HTMLElement>(null)
   const aboutRef = useRef<HTMLDivElement>(null)
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const stackRef = useRef<HTMLElement>(null)
+  const toolboxRef = useRef<HTMLElement>(null)
+  const exhibitRef = useRef<HTMLDivElement>(null)
+  const cellRef = useRef<HTMLSpanElement>(null)
   const hobbiesRef = useRef<HTMLElement>(null)
   const h1Ref = useRef<HTMLDivElement>(null)
   const h2Ref = useRef<HTMLDivElement>(null)
@@ -224,52 +194,45 @@ export default function About() {
     // — ALL DEVICES: Core Reveals & Layout Animations  —
     // ——————————————————————————————————————————————————
 
-    // Background case file: redaction bars peel off one by one, the exhibit photo is taped in
-    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      gsap.to(".bg-redact", {
-        backgroundSize: "0% 100%", duration: 0.6, ease: "power2.inOut", stagger: 0.35, delay: 0.6,
-        scrollTrigger: { trigger: backgroundRef.current, start: "top 85%" },
-      });
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+
+    // Exhibit A: the pictures pop into their cells in a scattered order
+    if (!reduce) {
+      gsap.from(".exhibit-pic", {
+        scale: 0.4, opacity: 0, duration: 0.7, ease: "back.out(1.8)", stagger: { each: 0.07, from: "random" },
+        scrollTrigger: { trigger: exhibitRef.current, start: "top 70%" },
+      })
+      gsap.from(".exhibit-line", {
+        yPercent: 40, opacity: 0, duration: 0.8, ease: "power3.out", stagger: 0.25,
+        scrollTrigger: { trigger: exhibitRef.current, start: "top 65%" },
+      })
+      // the lime loop round STUCK draws itself
+      gsap.fromTo(".lost-loop", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut", delay: 0.25, scrollTrigger: { trigger: footerRef.current, start: "top 85%" } })
     }
-    gsap.from(".bg-photo", {
-      opacity: 0, y: 30, rotate: -6, duration: 1, ease: "power3.out",
-      scrollTrigger: { trigger: ".bg-photo", start: "top 90%" },
-    });
+
+    // Toolkit: the tags drop into the box when it scrolls in; then each can be dragged and thrown around inside it
+    const tags = gsap.utils.toArray<HTMLElement>(".tool-tag")
+    if (!reduce) {
+      gsap.from(tags, {
+        y: () => -(toolboxRef.current!.offsetHeight + 200), opacity: 0, duration: 1.2, ease: "bounce.out", stagger: 0.04,
+        scrollTrigger: { trigger: toolboxRef.current, start: "top 70%" },
+      })
+    }
+    let top = 1
+    // shortcut: tags pass through each other (no collision physics); add a physics lib if they need to stack
+    Draggable.create(tags, {
+      bounds: toolboxRef.current,
+      inertia: true,
+      edgeResistance: 0.8,
+      onPress() { gsap.to(this.target, { scale: 1.12, rotate: 0, zIndex: ++top, duration: 0.2 }) },
+      onRelease() { gsap.to(this.target, { scale: 1, duration: 0.3 }) },
+    })
 
     // Expertise: index rows rise in one after another
     gsap.from(".exp-row", {
       opacity: 0, y: 40, duration: 0.9, ease: "power3.out", stagger: 0.15,
       scrollTrigger: { trigger: expertiseRef.current, start: "top 75%" },
     });
-
-    // the journal blocks under the statement fade up one after another
-    gsap.from(sectionRef.current!.querySelectorAll(".me-reveal"), {
-      opacity: 0, y: 20, duration: 0.8, ease: "power3.out", stagger: 0.12,
-      scrollTrigger: { trigger: sectionRef.current, start: "top 70%" },
-    });
-
-    // Stack: the list types itself out as you scroll; hand-drawn strokes draw in as they arrive
-    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      // words,chars (not chars alone): each word stays an unbreakable unit, so lines never wrap mid-word
-      const script = new SplitText(".stack-line", { type: "words,chars" });
-      gsap.from(script.chars, {
-        opacity: 0,
-        duration: 0.01,
-        stagger: 0.02,
-        ease: "none",
-        scrollTrigger: { trigger: stackRef.current, start: "top 75%", end: "bottom 85%", scrub: true },
-      });
-      gsap.utils.toArray<SVGPathElement>(".stack-stroke").forEach((path) => {
-        gsap.fromTo(path, { strokeDashoffset: 1 }, {
-          strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut",
-          scrollTrigger: { trigger: path.closest("svg"), start: "top 65%" },
-        });
-      });
-      gsap.from(".stack-photo", {
-        opacity: 0, y: 12, duration: 1, ease: "power3.out",
-        scrollTrigger: { trigger: ".stack-photo", start: "top 75%" },
-      });
-    }
 
     // Hobbies Reveal
     gsap.from(
@@ -299,11 +262,11 @@ export default function About() {
 
     // Footer Tree Mask
     const ftl = gsap.timeline({
-      scrollTrigger: { trigger: footerRef.current, start: "top 80%" },
+      scrollTrigger: { trigger: footerRef.current, start: "top 88%" },
     });
     ftl.to(treeMaskRef.current, {
       scaleY: 0,
-      duration: 1.5,
+      duration: 0.8,
       ease: "power4.out",
       transformOrigin: "right top",
     });
@@ -321,24 +284,22 @@ export default function About() {
       const name = new SplitText(".name h6", { type: "chars" });
       ttl.from(name.chars, { opacity: 0, y: 2, duration: 0.5, ease: "power3.out", stagger: 0.05 });
 
-      // Footer Text SplitText (Appended to the ftl timeline initialized above)
+      // Footer text: starts with the tree (not after it), quick staggers
       const pf = new SplitText(".footer p", { type: "chars" });
-      const h4f = new SplitText(".footer h4", { type: "words" });
       ftl.from(pf.chars, {
         opacity: 0,
         y: 10,
-        duration: 0.5,
+        duration: 0.35,
         ease: "power3.out",
-        stagger: 0.02,
-      });
-      ftl.from(h4f.words, {
+        stagger: 0.01,
+      }, 0);
+      ftl.from(".footer .tag-word", {
         opacity: 0,
         y: 10,
-        duration: 0.5,
+        duration: 0.4,
         ease: "power3.out",
-        stagger: 0.3,
-        delay: 0.3,
-      }, "-=0.3");
+        stagger: 0.05,
+      }, 0.1);
 
     });
     return () => mm.revert();
@@ -347,48 +308,42 @@ export default function About() {
 
   return (
     <main
-      className="min-h-screen pt-8 sm:pt-12 md:pt-15 px-4 sm:px-6 md:px-8 lg:px-12 flex flex-col justify-between gap-20"
+      className="min-h-screen bg-cream text-ink px-4 sm:px-6 md:px-8 lg:px-12 flex flex-col justify-between gap-20"
       ref={aboutRef}
     >
 
-      {/* Background — redacted statement, a taped-in exhibit, and the journal notes (what I do / origin / approach) */}
-      {/* overflow-x-clip: the tilted exhibit photo pokes ~1px past the edge on phones */}
-      <section className="relative overflow-x-clip pt-28 md:pt-36 pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-14 items-start">
-          <p ref={backgroundRef} className="md:col-span-7 md:row-start-1 text-2xl md:text-3xl lg:text-4xl font-light leading-snug">
-            For <Redact>3+ years</Redact> I&apos;ve worked between <Redact>design and code.</Redact> Building <Redact>interactive websites</Redact> where <Redact>motion has a purpose</Redact> and <Redact>nothing is there by accident</Redact>.
-          </p>
+      {/* Hello: the opener as an architectural poster (components/AboutScene.tsx) */}
+      <AboutScene />
 
-          {/* journal notes: two staggered mono columns under the statement */}
-          <div ref={sectionRef} className="md:col-span-7 md:row-start-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 font-mono text-xs sm:text-[0.8rem] leading-relaxed">
-            <div className="flex flex-col gap-5">
-              <p className="me-reveal"><span className="font-bold">{me[0].title}.</span> {me[0].description}</p>
-              <p className="me-reveal"><span className="font-bold">{me[1].title}.</span> {me[1].description}</p>
-            </div>
-            <p className="me-reveal sm:mt-24"><span className="font-bold">{me[2].title}.</span> {me[2].description}</p>
-          </div>
 
-          <figure className="md:col-start-9 md:col-span-4 md:row-start-1 md:row-span-2 max-md:w-3/4 max-md:self-end max-md:ml-auto">
-            <div className="bg-photo relative rotate-2 shadow-[0_1rem_2rem_-1rem_rgb(0_0_0/0.35)]">
-              <img src="/steve.jpg" alt="Steve Jobs poster: Let's go invent tomorrow instead of worrying about what happened yesterday" className="w-full aspect-4/5 object-cover grayscale" />
-              {/* tape strips */}
-              <span aria-hidden className="absolute -top-3 left-6 w-20 h-6 -rotate-6 bg-white/60" />
-              <span aria-hidden className="absolute -top-3 right-6 w-20 h-6 rotate-3 bg-white/60" />
-            </div>
-            <figcaption className="mt-5 font-mono text-2xs uppercase tracking-widest leading-relaxed">
-              <span className="font-bold">Exhibit A</span> — "Design is not just what it looks like and feels like. Design is how it works." — Steve Jobs
-            </figcaption>
-          </figure>
+
+      {/* Exhibit A: Steve Jobs's line laid across a grid, with pictures of things I love in some of the cells */}
+      <section aria-labelledby="exhibit-title" className="py-16 md:py-24">
+        <p id="exhibit-title" className="font-mono text-xs uppercase tracking-widest"><span className="text-[#FF8A3D]">/</span> Lore</p>
+        <div
+          ref={exhibitRef}
+          onPointerMove={moveCell}
+          onPointerLeave={() => { if (cellRef.current) cellRef.current.style.opacity = "0" }}
+          className="@container relative mt-8 mx-auto w-full max-w-[72rem] aspect-[10/13] min-h-0 grid grid-cols-10 grid-rows-13 border-r border-b border-ink/20 bg-[linear-gradient(to_right,rgba(36,32,31,.2)_1px,transparent_1px),linear-gradient(to_bottom,rgba(36,32,31,.2)_1px,transparent_1px)] bg-size-[10%_7.6923%]"
+        >
+          <span ref={cellRef} aria-hidden className="pointer-events-none absolute w-[10%] h-[7.6923%] bg-lime opacity-0 transition-[left,top,opacity] duration-200 ease-out" />
+          {EXHIBIT_PICS.map((pic) => (
+            <img key={pic.src} src={pic.src} alt="" className={`exhibit-pic relative size-full min-h-0 min-w-0 ${pic.fit === "contain" ? "object-contain p-[8%]" : "object-cover"}`} style={at(pic)} />
+          ))}
+          <blockquote className="contents">
+            {EXHIBIT_TEXT.map((line) => (
+              <p key={line.t} className="exhibit-line relative self-center px-[0.6cqw] font-display font-semibold uppercase tracking-tight leading-[0.95] text-[4.6cqw]" style={at(line)}>{line.t}</p>
+            ))}
+          </blockquote>
+          <p className="relative self-center col-start-2 col-span-3 row-start-13 font-mono uppercase tracking-widest text-[1.5cqw]">— Steve Jobs</p>
         </div>
-
       </section>
-
 
       {/* Expertise — big type index. Desktop (mouse/pen): hovering a row nudges it, dims the others, reveals its
           description and a desk-photo crop that trails the cursor. Touch: descriptions are always shown. */}
-      <section ref={expertiseRef} className="flex flex-col gap-8 py-16" onPointerMove={moveExpCursor}>
-        <p className="font-mono text-2xs uppercase tracking-widest">(Expertise)</p>
-        <ul className="border-t border-secondary/20" onPointerLeave={() => { setHoverExp(null); setExpPointer(false) }}>
+      <section ref={expertiseRef} className="flex flex-col gap-8 py-16 md:py-24 -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-12 px-4 sm:px-6 md:px-8 lg:px-12 bg-ink text-cream" onPointerMove={moveExpCursor}>
+        <p className="font-mono text-2xs uppercase tracking-widest text-lime">(Expertise)</p>
+        <ul className="border-t border-cream/20" onPointerLeave={() => { setHoverExp(null); setExpPointer(false) }}>
           {expertise.map((item, i) => (
             <li
               key={item.title}
@@ -397,10 +352,10 @@ export default function About() {
               // keyboard focus only: a tap also focuses the row, and shouldn't dim the others on phones
               onFocus={(e) => e.currentTarget.matches(":focus-visible") && setHoverExp(i)}
               onBlur={() => setHoverExp(null)}
-              className="exp-row group grid grid-cols-[2.5rem_1fr] md:grid-cols-[3rem_1fr_minmax(0,22rem)] gap-x-4 gap-y-3 items-baseline py-6 md:py-8 border-b border-secondary/20 outline-none"
+              className="exp-row group grid grid-cols-[2.5rem_1fr] md:grid-cols-[3rem_1fr_minmax(0,22rem)] gap-x-4 gap-y-3 items-baseline py-6 md:py-8 border-b border-cream/20 outline-none"
             >
-              <span className="font-mono text-2xs opacity-50">{String(i + 1).padStart(2, "0")}</span>
-              <h3 className={`font-light uppercase tracking-tight leading-none text-4xl sm:text-6xl lg:text-7xl transition-[translate,opacity] duration-500 ${hoverExp === i ? "translate-x-4" : ""} ${hoverExp !== null && hoverExp !== i ? "opacity-30" : ""}`}>
+              <span className="font-mono text-2xs text-lime">{String(i + 1).padStart(2, "0")}</span>
+              <h3 className={`font-light uppercase tracking-tight leading-none text-4xl sm:text-6xl lg:text-7xl transition-[translate,opacity,color] duration-500 ${hoverExp === i ? "translate-x-4 text-lime" : ""} ${hoverExp !== null && hoverExp !== i ? "opacity-30" : ""}`}>
                 {item.title}
               </h3>
               <p className={`col-start-2 md:col-start-3 font-mono text-xs sm:text-[0.8rem] leading-relaxed transition-opacity duration-500 pointer-fine:md:opacity-0 ${hoverExp === i ? "pointer-fine:md:opacity-100" : ""}`}>
@@ -421,34 +376,30 @@ export default function About() {
               key={item.title}
               src={item.img}
               alt=""
-              className={`absolute inset-0 w-full h-full object-cover grayscale transition-opacity duration-300 ${hoverExp === i ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${hoverExp === i ? "opacity-100" : "opacity-0"}`}
             />
           ))}
         </div>
       </section>
 
-      {/* Stack — typewritten document layout: numbered headings in both margins, indented lists, hand-drawn marks */}
-      <section ref={stackRef} className={`${courier.className} relative isolate overflow-hidden pt-24 md:pt-32 pb-12`}>
-        <StackPoster />
-        <div className="relative isolate mx-auto max-w-152 text-[0.78rem] sm:text-sm leading-relaxed">
-          <p className="stack-line text-center">
-            <span className="relative inline-block font-bold">STACK<Scribble /></span>
+      {/* Toolkit: the tags drop into the box; drag and throw them around */}
+      <section ref={toolboxRef} aria-labelledby="toolkit-title" className="relative flex h-[75svh] min-h-[30rem] flex-col overflow-hidden rounded-[2rem] border-2 border-ink p-6 sm:p-10">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 id="toolkit-title" className={`${POSTER} leading-[0.85] text-[clamp(3rem,7vw,12rem)]`}>Toolkit</h2>
+          <p className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-2xs uppercase tracking-widest">
+            <span><span className="inline-block size-2 rounded-full bg-lime align-middle mr-1.5" />Front end</span>
+            <span><span className="inline-block size-2 rounded-full bg-violet align-middle mr-1.5" />Back end</span>
+            <span><span className="inline-block size-2 rounded-full bg-[#FF8A3D] align-middle mr-1.5" />Tools</span>
+            <span className="hidden pointer-fine:inline opacity-60">· drag them around</span>
           </p>
-          <p className="stack-line text-center mt-1">(what I build with)</p>
-
-          <NumberedHeading n={1}>FRONTEND</NumberedHeading>
-          <ToolList tools={FRONTEND} />
-
-          <NumberedHeading n={2}>BACKEND</NumberedHeading>
-          <ToolList tools={BACKEND} bracket />
-
-          <NumberedHeading n={3}>TOOLS</NumberedHeading>
-          <div className="flex flex-col sm:flex-row gap-4 sm:items-start">
-            <div className="flex-1"><ToolList tools={TOOLS} /></div>
-            {/* pixel art: pixelated scaling keeps its hard edges; no grayscale so the green power light shows */}
-            <img src="/stack-computer.png" alt="Pixel-art desktop computer" className="stack-photo w-40 sm:w-44 aspect-4/3 object-cover [image-rendering:pixelated] self-end sm:self-start mt-3 mr-6 sm:mr-0" />
-          </div>
         </div>
+        <ul className="mt-auto flex flex-wrap-reverse content-start justify-center gap-2 sm:gap-3">
+          {TOOLKIT.map((tool, i) => (
+            <li key={tool.t} className={`tool-tag cursor-grab select-none rounded-full border-2 border-ink px-4 py-2 sm:px-6 sm:py-3 font-display font-bold uppercase tracking-tight text-[clamp(0.95rem,1.7vw,2.25rem)] shadow-[2px_3px_0_#24201F] active:cursor-grabbing ${TAG_COLOURS[tool.kind]}`} style={{ rotate: `${TAG_TILT[i % TAG_TILT.length]}deg` }}>
+              {tool.t}
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* Hobbies */}
@@ -464,7 +415,7 @@ export default function About() {
             const on = hoveredHobby === key
             return (
               <div key={key} className={`absolute inset-0 transition-opacity duration-300 ${on ? "opacity-100" : "opacity-0"}`}>
-                <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-mono font-semibold uppercase leading-none tracking-tight text-[22vw] opacity-[0.06]">
+                <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-mono font-semibold uppercase leading-none tracking-tight text-[22vw] text-violet opacity-[0.12]">
                   {c.title}
                 </p>
                 {c.images.map((img, i) => {
@@ -543,15 +494,26 @@ export default function About() {
         <article className={`absolute bottom-0 right-0 font-mono text-3xl name z-20 transition-opacity duration-500 ${hoveredHobby ? "opacity-0" : ""}`}>
           <h4 className="opacity-20">Obasa</h4>
           <h4 className="opacity-20">Temiloluwa</h4>
-          <h6 className="text-xl absolute top-1/3 tracking-[0.2em] font-semibold">Hobbies</h6>
+          <h6 className="text-xl absolute top-1/3 tracking-[0.2em] font-semibold text-violet">Hobbies</h6>
         </article>
       </section>
 
       {/* About Footer */}
-      <section className="h-[50vh] flex flex-col justify-end items-center gap-5 footer" ref={footerRef}>
+      <section className="min-h-[60vh] pt-24 flex flex-col justify-end items-center gap-8 footer" ref={footerRef}>
         <div>
-          <p className="text-xs font-light text-center mb-2">Don't hold back.</p>
-          <h4 className="text-3xl md:text-4xl font-mono">Say Hi!</h4>
+          <p className="text-xs font-light text-center mb-3">Got something in mind?</p>
+          <h4 className={`${POSTER} text-center leading-[0.85] text-[clamp(3.5rem,11vw,20rem)]`}>
+            <a href="/contact" className="transition-colors hover:text-violet">
+              <span className="tag-word inline-block">Call</span> <span className="tag-word inline-block">me</span> <span className="tag-word inline-block">if</span><br />
+              <span className="tag-word inline-block">you&apos;re</span>{" "}
+              <span className="tag-word relative inline-block">
+                <svg aria-hidden viewBox="0 0 200 100" preserveAspectRatio="none" className="absolute -left-[14%] -top-[22%] w-[128%] h-[144%] overflow-visible">
+                  <path className="lost-loop" d="M24 58 C 14 18, 168 4, 186 44 C 202 86, 44 100, 18 62 C 6 40, 64 16, 132 20" fill="none" stroke="#BCF975" strokeWidth="7" strokeLinecap="round" pathLength={1} strokeDasharray="1" vectorEffect="non-scaling-stroke" />
+                </svg>
+                <span className="relative">stuck.</span>
+              </span>
+            </a>
+          </h4>
         </div>
         <div className="relative">
           <div
@@ -559,7 +521,7 @@ export default function About() {
             className="absolute z-10 inset-0 bg-primary"
             style={{ transformOrigin: "right center" }}
           />
-          <img src="tree.png" alt="Tree" className="w-[20.125rem] max-md:w-auto max-md:h-50" />
+          <img src="/about/reader.png" alt="A pen sketch of Temi reading in a folding chair" className="block w-[30rem] max-md:w-[18rem] h-auto" />
 
         </div>
       </section>

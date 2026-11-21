@@ -8,9 +8,10 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/projects/${slug}`)
-  if (res.status === 404) notFound()
-  const project = res.ok ? await res.json() : null
+  // a network failure (or no base URL in a local preview) shouldn't take the page down; fall back to generic metadata
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/projects/${slug}`).catch(() => null)
+  if (res?.status === 404) notFound()
+  const project = res?.ok ? await res.json() : null
 
   return {
     title: `${project?.client} — Obasa Temiloluwa`,
