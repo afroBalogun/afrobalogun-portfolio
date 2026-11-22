@@ -116,13 +116,6 @@ export function ProjectForm({ initial, mode }: Props) {
           <Field label="Year"><input className={ui.field} type="number" value={data.year} onChange={(e) => set("year", Number(e.target.value))} /></Field>
           <Field label="Stack (comma separated)"><input className={ui.field} value={stackText} onChange={(e) => setStackText(e.target.value)} placeholder="Next.js, Node, SCAPA" /></Field>
           <Field label="Live link (optional)"><input className={ui.field} value={data.link} onChange={(e) => set("link", e.target.value)} placeholder="https://" /></Field>
-          <Field label="Card shape on /works">
-            <select className={ui.field} value={data.ratio} onChange={(e) => set("ratio", Number(e.target.value) as 1 | 2 | 3)}>
-              <option value={1}>Portrait</option>
-              <option value={2}>Landscape</option>
-              <option value={3}>Square</option>
-            </select>
-          </Field>
         </div>
       </Section>
 

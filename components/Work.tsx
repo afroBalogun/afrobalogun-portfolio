@@ -12,7 +12,8 @@ gsap.registerPlugin(useGSAP, ScrollTrigger)
 // A case study, result first: the title and the outcome in one line; a facts row (client, role, stack, year, visit);
 // the cover; the problem as a big tension line; the work; "under the bonnet" (the technical wins); the results as big
 // numbers; the closing line; the gallery; the next project. Any section without content is left out, so older
-// projects (description + body only) still read well. Photos keep the curtain reveal (none with reduced motion).
+// projects (description + body only) still read well. Photos keep the curtain reveal (none with reduced motion) and
+// show at their own shape, never cropped, so reviewers can read the screens.
 
 interface Project {
   _id: string; slug: string; title: string; client: string
@@ -33,7 +34,8 @@ const BARS = ["bg-lime", "bg-violet", "bg-[#FF8A3D]", "bg-ink"]
 function Photo({ src, alt = "", className = "" }: { src: string; alt?: string; className?: string }) {
   return (
     <div className={`relative overflow-hidden bg-ink/10 ${className}`}>
-      <img src={src} alt={alt} className="block size-full object-cover" />
+      {/* the photo sets its own height, so re-measure the scroll animations once it has loaded */}
+      <img src={src} alt={alt} onLoad={() => ScrollTrigger.refresh()} className="block w-full h-auto" />
       <div className="img-mask absolute inset-0 z-10 bg-cream motion-reduce:hidden" />
     </div>
   )
@@ -62,7 +64,20 @@ export default function Work() {
     gsap.utils.toArray<HTMLElement>(".rise-in", mainRef.current).forEach((el) => {
       gsap.from(el, { opacity: 0, y: 16, duration: 0.8, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 88%" } })
     })
-  }, { scope: mainRef, dependencies: [project] })
+    // results count up from zero; the text around the number ("~", "%", " hrs/week") stays put, and a value with no
+    // number in it ("Sold out") is left alone
+    gsap.utils.toArray<HTMLElement>(".count-up", mainRef.current).forEach((el) => {
+      const m = el.dataset.value!.match(/^(\D*?)(\d[\d,]*(?:\.\d+)?)(.*)$/)
+      if (!m) return
+      const [, pre, num, post] = m
+      const target = Number(num.replace(/,/g, ""))
+      const decimals = num.split(".")[1]?.length ?? 0
+      const show = (n: number) => (el.textContent = pre + n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: num.includes(",") }) + post)
+      const c = { n: 0 }
+      show(0)
+      gsap.to(c, { n: target, duration: 1.6, ease: "power3.out", onUpdate: () => show(c.n), scrollTrigger: { trigger: el, start: "top 90%" } })
+    })
+  }, { scope: mainRef, dependencies: [project], revertOnUpdate: true }) // a re-run (StrictMode double fetch, new data) must undo the old tweens, or a second gsap.from animates 0 → 0
 
   if (!project) return null
 
@@ -107,7 +122,7 @@ export default function Work() {
       </header>
 
       <div className="px-4 sm:px-6 lg:px-12 pb-16 flex flex-col gap-20 md:gap-28">
-        <Photo src={project.coverImg} alt={project.title} className="w-full aspect-16/9" />
+        <Photo src={project.coverImg} alt={project.title} className="w-full" />
 
         {/* the problem, as a tension */}
         {problem && (
@@ -154,7 +169,9 @@ export default function Work() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 border-t-2 border-ink pt-8">
               {results.map((r) => (
                 <div key={r.label + r.value} className="flex flex-col gap-2">
-                  <p className={`${POSTER} text-[clamp(4.5rem,10vw,16rem)]`}>{r.value}</p>
+                  <p className={`${POSTER} tabular-nums text-[clamp(4.5rem,10vw,16rem)]`}>
+                    <span aria-hidden className="count-up" data-value={r.value}>{r.value}</span><span className="sr-only">{r.value}</span>
+                  </p>
                   <p className="font-inter font-medium text-lg">{r.label}</p>
                 </div>
               ))}
@@ -171,9 +188,9 @@ export default function Work() {
 
         {/* gallery: a pair, then wide ones */}
         {images.length > 0 && (
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          <section className="grid grid-cols-1 md:grid-cols-2 items-start gap-6 md:gap-8">
             {images.map((src, i) => (
-              <Photo key={src} src={src} className={i < 2 ? "aspect-[4/5]" : "md:col-span-2 aspect-16/9"} />
+              <Photo key={src} src={src} className={i < 2 ? "" : "md:col-span-2"} />
             ))}
           </section>
         )}

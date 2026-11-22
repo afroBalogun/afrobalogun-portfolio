@@ -19,15 +19,10 @@ interface Project {
   role: string
   coverImg: string
   year: number
-  ratio: 1 | 2 | 3
 }
 
-// card shapes: portrait, landscape, square
-const ratioSize: Record<1 | 2 | 3, string> = {
-  1: "w-[clamp(11rem,20vw,24rem)] aspect-[3/4]",
-  2: "w-[clamp(15rem,30vw,36rem)] aspect-[4/3]",
-  3: "w-[clamp(12rem,22vw,26rem)] aspect-square",
-}
+// every card in a row is the same height and as wide as its image, so a cover is shown whole, never cropped
+const CARD_H = "h-[clamp(12rem,20vw,26rem)]"
 // each card's highlight colour, in turn
 const ACCENTS = ["bg-lime text-ink", "bg-violet text-cream", "bg-[#FF8A3D] text-ink"]
 const POSTER = "font-display font-extrabold [font-stretch:62%] uppercase leading-[0.82]"
@@ -73,7 +68,7 @@ export default function Works() {
     gsap.utils.toArray<HTMLElement>(".card-mask").forEach((mask, i) => {
       gsap.to(mask, { yPercent: 100, duration: 1.1, ease: "power4.inOut", scrollTrigger: { trigger: mask.parentElement, start: "top 85%" }, delay: (i % 3) * 0.12 })
     })
-  }, { scope: mainRef, dependencies: [groups] })
+  }, { scope: mainRef, dependencies: [groups], revertOnUpdate: true }) // a re-run (StrictMode double fetch, new data) must undo the old tweens, or a second gsap.from animates 0 → 0
 
   let n = 0 // running card count, for the accent colours
   return (
@@ -111,8 +106,8 @@ export default function Works() {
                 const accent = ACCENTS[n++ % ACCENTS.length]
                 return (
                   <Link key={project._id} href={`/works/${project.slug}`} className="group flex flex-col gap-3 outline-none">
-                    <article className={`${ratioSize[project.ratio]} relative overflow-hidden bg-ink/10`}>
-                      <img src={project.coverImg} alt={project.title} className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+                    <article className="relative self-start max-w-full overflow-hidden bg-ink/10">
+                      <img src={project.coverImg} alt={project.title} className={`block ${CARD_H} w-auto max-w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105`} />
                       {/* a cream cover that slides off as the card scrolls in; never shown with reduced motion, where nothing would move it */}
                       <div className="card-mask absolute inset-0 z-10 bg-cream motion-reduce:hidden" style={{ transformOrigin: "top center" }} />
                     </article>
@@ -142,7 +137,7 @@ function WorksSkeleton() {
           <div className="h-0.5 bg-ink/10" />
           <div className="flex mt-8 gap-6 md:gap-10 flex-wrap items-end">
             {Array.from({ length: count + 1 }, (_, i) => (
-              <div key={i} className={`${ratioSize[((i % 3) + 1) as 1 | 2 | 3]} bg-ink/10`} />
+              <div key={i} className={`${CARD_H} ${["aspect-[3/4]", "aspect-[4/3]", "aspect-square"][i % 3]} bg-ink/10`} />
             ))}
           </div>
         </section>
