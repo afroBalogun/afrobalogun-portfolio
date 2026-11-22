@@ -1,19 +1,16 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { ui } from "@/components/admin/ui"
 
 export function DeleteProject({ slug }: { slug: string }) {
   const router = useRouter()
 
   const del = async () => {
-    if (!confirm(`delete ${slug}?`)) return
+    if (!confirm(`Delete "${slug}"? This can't be undone.`)) return
     await fetch(`/api/projects/${slug}`, { method: "DELETE" })
     router.refresh()
   }
 
-  return (
-    <button onClick={del} className="text-2xs tracking-widest text-red-700/70 hover:text-red-700 transition-colors">
-      delete
-    </button>
-  )
+  return <button onClick={del} className={ui.danger}>Delete</button>
 }

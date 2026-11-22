@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   await connectDB()
 
-  const { title, year, role, coverImg, images, ratio, link, description, client, body } = await req.json()
+  const { title, year, role, coverImg, images, ratio, link, description, client, body, summary, stack, problem, highlights, results, outcome } = await req.json()
   if (!title || !year || !role || !coverImg || !ratio || !description || !client) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
@@ -31,6 +31,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Slug already exists" }, { status: 409 })
   }
 
-  const project = await Project.create({ title, slug, year, role, coverImg, images, ratio, link, description, client, body })
+  const project = await Project.create({ title, slug, year, role, coverImg, images, ratio, link, description, client, body, summary, stack, problem, highlights, results, outcome })
   return NextResponse.json(project, { status: 201 })
 }

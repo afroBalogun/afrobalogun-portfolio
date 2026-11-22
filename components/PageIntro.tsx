@@ -13,6 +13,8 @@ export default function PageIntro() {
   const pathname = usePathname()
 
   useEffect(() => {
+    // note when the panel lifts, so a hero that mounts late can tell it missed the signal (components/Hero.tsx)
+    ;(window as unknown as { __introAt?: number }).__introAt = performance.now() + HOLD
     const t = setTimeout(() => window.dispatchEvent(new Event("site:landing")), HOLD)
     return () => clearTimeout(t)
   }, [pathname])
@@ -21,6 +23,9 @@ export default function PageIntro() {
   const parts = pathname.split("/").filter(Boolean)
   const title = parts.length ? parts[parts.length - 1].replace(/-/g, " ") : "afroBalogun"
   const over = parts.length > 1 ? parts[0] : parts.length ? "afroBalogun" : "Home"
+  // sized so the longest word always fits the width (condensed caps run about half an em each); words never break
+  const longest = Math.max(...title.split(" ").map((w) => w.length))
+  const size = `min(30rem, 16vw, ${(86 / (longest * 0.52)).toFixed(2)}vw)`
 
   return (
     <div key={pathname} id="loader" aria-hidden className="fixed inset-0 z-[100] pointer-events-none">
@@ -31,10 +36,17 @@ export default function PageIntro() {
         <p className="font-inter font-black uppercase tracking-tight text-[clamp(0.9rem,1.6vw,2.5rem)]">
           <span className="relative inline-block bg-lime text-ink px-[0.25em] -rotate-2">{over}<sup className="text-violet text-[0.8em]">*</sup></span>
         </p>
-        <p className="flex flex-wrap overflow-hidden font-display font-extrabold [font-stretch:62%] uppercase leading-[0.85] text-[clamp(4rem,16vw,30rem)] pt-[0.05em]">
-          {title.split("").map((ch, i) => (
-            <span key={i} className="page-intro-letter inline-block" style={{ animationDelay: `${0.08 + i * 0.035}s` }}>{ch === " " ? " " : ch}</span>
-          ))}
+        <p className="flex flex-wrap gap-x-[0.25em] overflow-hidden font-display font-extrabold [font-stretch:62%] uppercase leading-[0.85] pt-[0.05em]" style={{ fontSize: size }}>
+          {title.split(" ").map((word, w, words) => {
+            const before = words.slice(0, w).join("").length
+            return (
+              <span key={w} className="inline-flex whitespace-nowrap">
+                {word.split("").map((ch, i) => (
+                  <span key={i} className="page-intro-letter inline-block" style={{ animationDelay: `${0.08 + (before + i) * 0.035}s` }}>{ch}</span>
+                ))}
+              </span>
+            )
+          })}
         </p>
         <span className="page-intro-bar absolute left-0 bottom-0 h-1.5 w-full origin-left bg-[#FF8A3D]" />
       </div>

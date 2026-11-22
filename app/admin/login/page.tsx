@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { ui } from "@/components/admin/ui"
 
 export default function Login() {
   const router = useRouter()
@@ -9,7 +10,8 @@ export default function Login() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const submit = async () => {
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
     setError("")
     const res = await fetch("/api/admin/auth", {
@@ -19,33 +21,23 @@ export default function Login() {
     })
     setLoading(false)
     if (res.ok) router.push("/admin")
-    else setError("wrong password")
+    else setError("Wrong password")
   }
 
   return (
-    <main className="min-h-[calc(100vh-5rem)] bg-primary text-secondary flex items-center justify-center">
-      <div className="flex flex-col gap-6 w-72">
-        <p className="text-xs tracking-[0.2em] uppercase opacity-40">admin / login</p>
-
-        <input
-          type="password"
-          placeholder="password"
-          value={pw}
-          onChange={(e) => setPw(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
-          className="bg-transparent border border-secondary/15 px-4 py-3 text-sm outline-none focus:border-secondary/50 transition-colors"
-        />
-
-        {error && <p className="text-2xs text-red-700 tracking-widest">{error}</p>}
-
-        <button
-          onClick={submit}
-          disabled={loading}
-          className="border border-secondary/25 px-4 py-3 text-xs tracking-[0.2em] uppercase hover:bg-secondary/5 transition-colors disabled:opacity-30"
-        >
-          {loading ? "..." : "enter"}
-        </button>
-      </div>
-    </main>
+    <div className="min-h-[80svh] w-full grid place-items-center">
+      <form onSubmit={submit} className="flex w-full max-w-sm flex-col gap-6">
+        <div className="flex flex-col gap-3">
+          <span className="w-fit -rotate-2 bg-lime px-1.5 font-inter text-sm font-black uppercase">Admin</span>
+          <h1 className={ui.title}>Welcome back</h1>
+        </div>
+        <label className="flex flex-col gap-2">
+          <span className={ui.label}>Password</span>
+          <input type="password" autoFocus value={pw} onChange={(e) => setPw(e.target.value)} className={ui.field} />
+        </label>
+        {error && <p className="text-sm text-red-700">{error}</p>}
+        <button type="submit" disabled={loading || !pw} className={`${ui.primary} self-start`}>{loading ? "Checking…" : "Enter →"}</button>
+      </form>
+    </div>
   )
 }

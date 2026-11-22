@@ -38,10 +38,19 @@ export default function Hero() {
       .to(".fig-back, .fig-front", { y: () => -innerHeight * 0.025 }, 0)
 
     const play = () => intro.play()
-    if (document.getElementById("loader")) addEventListener("site:landing", play, { once: true })
-    else play()
+    // the page intro sends "site:landing" as it lifts, and notes when that is (window.__introAt). On a slow load the
+    // hero can mount after the signal has gone, which used to leave it hidden; so if the moment has just passed, play
+    // now; if it's coming, wait for it; and whatever happens, play within the intro's full length.
+    const introAt = (window as unknown as { __introAt?: number }).__introAt ?? 0
+    const now = performance.now()
+    let fallback: ReturnType<typeof setTimeout> | undefined
+    if (!document.getElementById("loader") || (introAt <= now && now - introAt < 2000)) play()
+    else {
+      addEventListener("site:landing", play, { once: true })
+      fallback = setTimeout(play, Math.max(0, introAt - now) + 900)
+    }
     // without this, a re-run (React dev runs effects twice) leaves a listener that plays a stale, reverted timeline
-    return () => removeEventListener("site:landing", play)
+    return () => { removeEventListener("site:landing", play); clearTimeout(fallback) }
   }, { scope: ref })
 
   // cursor spotlight on the grid: the pointer position goes into CSS variables (no re-render), and the square under
@@ -85,7 +94,8 @@ export default function Hero() {
       {/* the word (and, on phones, the figure tied to it) */}
       <div className="relative flex-1 grid place-items-center px-4 sm:px-6 lg:px-12 py-10">
         <div className="hero-stage relative w-full">
-          <Figure className="fig-back md:hidden absolute z-0 left-1/2 bottom-[-30%] h-[200%] -translate-x-[38%] [mask-image:linear-gradient(to_bottom,#000_70%,transparent_95%)]" />
+          {/* phones: the back copy sits exactly where the front copy lands, so the reveal reads as one figure stepping forward */}
+          <Figure className="fig-back md:hidden absolute z-0 left-1/2 bottom-[-28%] h-[150%] -translate-x-[38%] translate-y-[45%] [mask-image:linear-gradient(to_bottom,#000_70%,transparent_95%)]" />
 
           {/* the word fills its box, sized from the box's width (cqw): full width up to tablets, a centred 70% from 1024px up
               so the hero stays calm and the side text sits mostly on the paper beside it */}

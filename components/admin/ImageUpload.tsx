@@ -1,58 +1,60 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { ui } from "./ui"
 
 interface Props {
   label: string
   value: string
   onChange: (url: string) => void
   folder?: string
+  tall?: boolean
 }
 
-export function ImageUpload({ label, value, onChange, folder = "portfolio" }: Props) {
+export function ImageUpload({ label, value, onChange, folder = "portfolio", tall }: Props) {
   const inputRef  = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const upload = async (file: File) => {
     setLoading(true)
+    setError("")
     const form = new FormData()
     form.append("file", file)
     form.append("folder", folder)
     const res  = await fetch("/api/admin/upload", { method: "POST", body: form })
-    const data = await res.json()
-    onChange(data.url)
+    const data = await res.json().catch(() => ({}))
     setLoading(false)
+    if (!res.ok || !data.url) return setError(data.error ?? "Upload failed")
+    onChange(data.url)
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-2xs tracking-widest uppercase opacity-40">{label}</label>
+      <span className={ui.label}>{label}</span>
 
-      <div
+      <button
+        type="button"
         onClick={() => inputRef.current?.click()}
-        className="border border-dashed border-secondary/25 h-36 flex items-center justify-center cursor-pointer hover:border-secondary/50 transition-colors relative overflow-hidden"
+        className={`group relative overflow-hidden rounded-xl bg-cream ring-1 ring-ink/15 transition hover:ring-2 hover:ring-violet ${tall ? "aspect-video" : "h-36"}`}
       >
         {value ? (
-          <img src={value} alt="" className="w-full h-full object-cover grayscale" />
+          <>
+            <img src={value} alt="" className="size-full object-cover" />
+            <span className="absolute inset-0 grid place-items-center bg-ink/50 font-mono text-2xs uppercase tracking-widest text-cream opacity-0 transition group-hover:opacity-100">Replace</span>
+          </>
         ) : (
-          <span className="text-2xs opacity-30 tracking-widest">
-            {loading ? "uploading..." : "click to upload"}
+          <span className="grid size-full place-items-center font-mono text-2xs uppercase tracking-widest text-ink/40">
+            {loading ? "Uploading…" : "+ Upload image"}
           </span>
         )}
-        {loading && (
-          <div className="absolute inset-0 bg-primary/80 flex items-center justify-center">
-            <span className="text-2xs tracking-widest opacity-60">uploading...</span>
-          </div>
-        )}
-      </div>
+        {loading && value && <span className="absolute inset-0 grid place-items-center bg-cream/80 font-mono text-2xs uppercase tracking-widest">Uploading…</span>}
+      </button>
 
       {value && (
-        <input
-          value={value}
-          readOnly
-          className="bg-transparent border border-secondary/15 px-3 py-2 text-2xs opacity-40 outline-none"
-        />
+        <button type="button" onClick={() => onChange("")} className={`${ui.danger} self-start`}>Remove</button>
       )}
+      {error && <p className="text-xs text-red-700">{error}</p>}
 
       <input
         ref={inputRef}

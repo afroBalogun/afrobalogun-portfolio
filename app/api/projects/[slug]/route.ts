@@ -20,7 +20,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ slug: stri
 export async function PATCH(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   await connectDB()
   const { slug } = await params
-  const body = await req.json()
+  // never let an edit rewrite the record's identity or timestamps
+  const { _id, slug: _s, createdAt, updatedAt, __v, ...body } = await req.json()
   const project = await Project.findOneAndUpdate({ slug }, { $set: body }, { new: true, runValidators: true })
   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 })
   return NextResponse.json(project)

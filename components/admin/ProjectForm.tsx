@@ -3,6 +3,11 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ImageUpload } from "./ImageUpload"
+import { ui } from "./ui"
+import { STORY_PARTS } from "./caseStudy"
+
+// The project editor, laid out in the order the case study reads (basics → story → the work → under the bonnet →
+// results → closing → images), with a note under each section on what makes it result-oriented.
 
 interface ProjectData {
   title: string
@@ -15,14 +20,21 @@ interface ProjectData {
   images: string[]
   ratio: 1 | 2 | 3
   link: string
+  summary: string
+  stack: string[]
+  problem: { headline: string; body: string }
+  highlights: { title: string; body: string }[]
+  results: { value: string; label: string }[]
+  outcome: string
 }
 
 const empty: ProjectData = {
   title: "", client: "", description: "",
   year: new Date().getFullYear(), role: "",
-  body: [], coverImg: "",
-  images: ["", "", "", "", ""],
+  body: [], coverImg: "", images: [],
   ratio: 1, link: "",
+  summary: "", stack: [], problem: { headline: "", body: "" },
+  highlights: [], results: [], outcome: "",
 }
 
 interface Props {
@@ -30,136 +42,164 @@ interface Props {
   mode: "create" | "edit"
 }
 
-const field = "bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors w-full"
-const label = "text-2xs tracking-widest uppercase opacity-40"
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section className={ui.section}>
+      <div className="flex flex-col gap-1.5">
+        <h2 className={ui.sectionTitle}>{title}</h2>
+        {hint && <p className={ui.hint}>{hint}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <label className={`flex flex-col gap-1.5 ${className}`}>
+      <span className={ui.label}>{label}</span>
+      {children}
+    </label>
+  )
+}
 
 export function ProjectForm({ initial, mode }: Props) {
   const router = useRouter()
-  const [data, setData] = useState<ProjectData>({ ...empty, ...initial })
+  const [data, setData] = useState<ProjectData>({
+    ...empty,
+    ...initial,
+    problem: { ...empty.problem, ...initial?.problem },
+    images: (initial?.images ?? []).filter(Boolean),
+  })
+  const [stackText, setStackText] = useState((initial?.stack ?? []).join(", "))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
-  const set = (key: keyof ProjectData, value: unknown) =>
-    setData((d) => ({ ...d, [key]: value }))
-
-  const setBody = (i: number, v: string) =>
-    setData((d) => { const b = [...d.body]; b[i] = v; return { ...d, body: b } })
-
-  const setImage = (i: number, url: string) =>
-    setData((d) => { const imgs = [...d.images]; imgs[i] = url; return { ...d, images: imgs } })
+  const set = <K extends keyof ProjectData>(key: K, value: ProjectData[K]) => setData((d) => ({ ...d, [key]: value }))
+  // edit one item of a list field
+  const setItem = <K extends "body" | "images" | "highlights" | "results">(key: K, i: number, value: ProjectData[K][number]) =>
+    setData((d) => ({ ...d, [key]: d[key].map((v, j) => (j === i ? value : v)) }))
+  const removeItem = (key: "body" | "images" | "highlights" | "results", i: number) =>
+    setData((d) => ({ ...d, [key]: d[key].filter((_, j) => j !== i) }))
 
   const save = async () => {
     setSaving(true)
     setError("")
-
-    const slug = initial?.slug
-    const url = mode === "create" ? "/api/projects" : `/api/projects/${slug}`
-    const method = mode === "create" ? "POST" : "PATCH"
-
-    const slug_gen = data.title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
-    const body = mode === "create" ? { ...data, slug: slug_gen } : data
-
-    const res = await fetch(url, {
-      method,
-      body: JSON.stringify(body),
+    const payload = {
+      ...data,
+      stack: stackText.split(",").map((s) => s.trim()).filter(Boolean),
+      body: data.body.filter((p) => p.trim()),
+      images: data.images.filter(Boolean),
+      highlights: data.highlights.filter((h) => h.title.trim()),
+      results: data.results.filter((r) => r.value.trim()),
+    }
+    const res = await fetch(mode === "create" ? "/api/projects" : `/api/projects/${initial?.slug}`, {
+      method: mode === "create" ? "POST" : "PATCH",
+      body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" },
     })
-
     setSaving(false)
     if (res.ok) router.push("/admin/projects")
-    else setError((await res.json()).error || "something went wrong")
+    else setError((await res.json().catch(() => ({}))).error || "Something went wrong")
   }
 
-  const imageLabels = ["Left stack — top", "Left stack — bottom", "Mid single", "Full width 1", "Full width 2"]
+  const done = STORY_PARTS.filter((s) => s.done(data)).length
 
   return (
-    <div className="flex flex-col gap-10 max-w-2xl">
-
-      {/* Basic info */}
-      <section className="flex flex-col gap-5">
-        <p className="text-2xs tracking-[0.2em] uppercase opacity-30 border-b border-secondary/15 pb-3">info</p>
-
-        <div className="grid grid-cols-2 gap-4">
-          {([["title", "title"], ["client", "client name"], ["role", "role"], ["link", "live link (optional)"]] as const).map(([key, lbl]) => (
-            <div key={key} className="flex flex-col gap-1.5">
-              <label className={label}>{lbl}</label>
-              <input className={field} value={(data as any)[key]} onChange={(e) => set(key as any, e.target.value)} />
-            </div>
-          ))}
-
-          <div className="flex flex-col gap-1.5">
-            <label className={label}>year</label>
-            <input className={field} type="number" value={data.year} onChange={(e) => set("year", Number(e.target.value))} />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className={label}>ratio (card size on /works)</label>
-            <select className={`${field} bg-primary`} value={data.ratio} onChange={(e) => set("ratio", Number(e.target.value) as 1 | 2 | 3)}>
-              <option value={1}>1 — portrait</option>
-              <option value={2}>2 — landscape</option>
-              <option value={3}>3 — square</option>
+    <div className="flex flex-col gap-6 max-w-4xl pb-28">
+      {/* basics */}
+      <Section title="Basics">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Title"><input className={ui.field} value={data.title} onChange={(e) => set("title", e.target.value)} placeholder="True Life Productions" /></Field>
+          <Field label="Client"><input className={ui.field} value={data.client} onChange={(e) => set("client", e.target.value)} /></Field>
+          <Field label="Role"><input className={ui.field} value={data.role} onChange={(e) => set("role", e.target.value)} placeholder="Fullstack engineer" /></Field>
+          <Field label="Year"><input className={ui.field} type="number" value={data.year} onChange={(e) => set("year", Number(e.target.value))} /></Field>
+          <Field label="Stack (comma separated)"><input className={ui.field} value={stackText} onChange={(e) => setStackText(e.target.value)} placeholder="Next.js, Node, SCAPA" /></Field>
+          <Field label="Live link (optional)"><input className={ui.field} value={data.link} onChange={(e) => set("link", e.target.value)} placeholder="https://" /></Field>
+          <Field label="Card shape on /works">
+            <select className={ui.field} value={data.ratio} onChange={(e) => set("ratio", Number(e.target.value) as 1 | 2 | 3)}>
+              <option value={1}>Portrait</option>
+              <option value={2}>Landscape</option>
+              <option value={3}>Square</option>
             </select>
-          </div>
+          </Field>
         </div>
+      </Section>
 
-        <div className="flex flex-col gap-1.5">
-          <label className={label}>client description</label>
-          <textarea className={`${field} resize-none`} rows={3} value={data.description} onChange={(e) => set("description", e.target.value)} />
-        </div>
-      </section>
+      {/* the story */}
+      <Section title="The outcome, in one line" hint="What changed because of this work, not what the site has. Shown big under the title. e.g. “A ticketing site for a production house that can't oversell a seat.”">
+        <input className={ui.field} value={data.summary} onChange={(e) => set("summary", e.target.value)} />
+      </Section>
 
-      {/* Body paragraphs */}
-      <section className="flex flex-col gap-5">
-        <p className="text-2xs tracking-[0.2em] uppercase opacity-30 border-b border-secondary/15 pb-3">body copy</p>
+      <Section title="The problem" hint="Frame it as a tension the work had to resolve. A short headline (e.g. “Sell-out shows, one shared stock count.”), then a paragraph on what was going wrong and who it hurt.">
+        <Field label="Headline"><input className={ui.field} value={data.problem.headline} onChange={(e) => set("problem", { ...data.problem, headline: e.target.value })} /></Field>
+        <Field label="Paragraph"><textarea rows={4} className={`${ui.field} resize-y`} value={data.problem.body} onChange={(e) => set("problem", { ...data.problem, body: e.target.value })} /></Field>
+      </Section>
 
-        {data.body.length === 0 && (
-          <p className="text-2xs opacity-20 tracking-widest">no paragraphs yet</p>
-        )}
+      <Section title="About the project" hint="A short paragraph on the client and the project, for context.">
+        <textarea rows={3} className={`${ui.field} resize-y`} value={data.description} onChange={(e) => set("description", e.target.value)} />
+      </Section>
 
+      <Section title="The work" hint="What you did and the decisions you made, a paragraph each. Lead with the decision and why, not the feature list.">
         {data.body.map((para, i) => (
           <div key={i} className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <label className={label}>paragraph {i + 1}</label>
-              <button
-                onClick={() => setData((d) => ({ ...d, body: d.body.filter((_, j) => j !== i) }))}
-                className="text-2xs tracking-widest text-red-700/70 hover:text-red-700 transition-colors"
-              >
-                remove
-              </button>
-            </div>
-            <textarea
-              className={`${field} resize-none`}
-              rows={4}
-              value={para}
-              onChange={(e) => setBody(i, e.target.value)}
-            />
+            <div className="flex items-center justify-between"><span className={ui.label}>Paragraph</span><button type="button" onClick={() => removeItem("body", i)} className={ui.danger}>Remove</button></div>
+            <textarea rows={4} className={`${ui.field} resize-y`} value={para} onChange={(e) => setItem("body", i, e.target.value)} />
           </div>
         ))}
+        <button type="button" onClick={() => set("body", [...data.body, ""])} className={`${ui.secondary} self-start`}>+ Add paragraph</button>
+      </Section>
 
-        <button
-          onClick={() => setData((d) => ({ ...d, body: [...d.body, ""] }))}
-          className="text-2xs tracking-widest border border-dashed border-secondary/25 px-4 py-2.5 hover:border-secondary/50 transition-colors self-start"
-        >
-          + add paragraph
-        </button>
-      </section>
+      <Section title="Under the bonnet" hint="Three or four technical wins, each a short title and one sentence. e.g. “Payments confirmed by webhook, not the browser.”">
+        {data.highlights.map((h, i) => (
+          <div key={i} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3 items-start">
+            <input className={ui.field} placeholder="Title" value={h.title} onChange={(e) => setItem("highlights", i, { ...h, title: e.target.value })} />
+            <textarea rows={2} className={`${ui.field} resize-y`} placeholder="One sentence" value={h.body} onChange={(e) => setItem("highlights", i, { ...h, body: e.target.value })} />
+            <button type="button" onClick={() => removeItem("highlights", i)} className={`${ui.danger} md:pt-3`}>Remove</button>
+          </div>
+        ))}
+        {data.highlights.length < 4 && <button type="button" onClick={() => set("highlights", [...data.highlights, { title: "", body: "" }])} className={`${ui.secondary} self-start`}>+ Add highlight</button>}
+      </Section>
 
-      {/* Images */}
-      <section className="flex flex-col gap-5">
-        <p className="text-2xs tracking-[0.2em] uppercase opacity-30 border-b border-secondary/15 pb-3">images</p>
-        <ImageUpload label="cover image (hero)" value={data.coverImg} onChange={(url) => set("coverImg", url)} folder="portfolio/covers" />
-        <div className="grid grid-cols-2 gap-4 mt-2">
+      <Section title="Results" hint="Two or three numbers, shown big. A value and what it counts: “0” / “tickets oversold”, “~10h” / “saved every week”, “226” / “businesses listed”.">
+        {data.results.map((r, i) => (
+          <div key={i} className="grid grid-cols-[7rem_1fr_auto] gap-3 items-center">
+            <input className={`${ui.field} font-display font-bold text-lg`} placeholder="226" value={r.value} onChange={(e) => setItem("results", i, { ...r, value: e.target.value })} />
+            <input className={ui.field} placeholder="businesses listed" value={r.label} onChange={(e) => setItem("results", i, { ...r, label: e.target.value })} />
+            <button type="button" onClick={() => removeItem("results", i)} className={ui.danger}>Remove</button>
+          </div>
+        ))}
+        {data.results.length < 4 && <button type="button" onClick={() => set("results", [...data.results, { value: "", label: "" }])} className={`${ui.secondary} self-start`}>+ Add result</button>}
+      </Section>
+
+      <Section title="Closing line" hint="One sentence on where it left the client. e.g. “The team runs ticketing themselves; the site just sells out.”">
+        <input className={ui.field} value={data.outcome} onChange={(e) => set("outcome", e.target.value)} />
+      </Section>
+
+      {/* images */}
+      <Section title="Images" hint="The cover leads the page; the rest run as a gallery (the first two side by side, then full width).">
+        <ImageUpload label="Cover" value={data.coverImg} onChange={(url) => set("coverImg", url)} folder="portfolio/covers" tall />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {data.images.map((img, i) => (
-            <ImageUpload key={i} label={imageLabels[i]} value={img} onChange={(url) => setImage(i, url)} folder="portfolio/projects" />
+            <ImageUpload key={i} label="Gallery image" value={img} onChange={(url) => (url ? setItem("images", i, url) : removeItem("images", i))} folder="portfolio/projects" />
           ))}
         </div>
-      </section>
+        <button type="button" onClick={() => set("images", [...data.images, ""])} className={`${ui.secondary} self-start`}>+ Add image</button>
+      </Section>
 
-      {error && <p className="text-2xs text-red-700 tracking-widest">{error}</p>}
-
-      <button onClick={save} disabled={saving} className="border border-secondary/25 px-6 py-3 text-xs tracking-[0.2em] uppercase hover:bg-secondary/5 transition-colors disabled:opacity-30 self-start">
-        {saving ? "saving..." : mode === "create" ? "create project" : "save changes"}
-      </button>
+      {/* save bar */}
+      <div className="fixed bottom-0 left-56 right-0 z-20 flex items-center justify-between gap-4 bg-cream/90 backdrop-blur px-6 md:px-12 py-4 ring-1 ring-ink/10">
+        <p className="text-sm text-ink/60">
+          Case study <span className="font-semibold text-ink">{done}/{STORY_PARTS.length}</span> complete
+          {error && <span className="ml-4 text-red-700">{error}</span>}
+        </p>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={() => router.push("/admin/projects")} className={ui.ghost}>Cancel</button>
+          <button type="button" onClick={save} disabled={saving || !data.title || !data.client || !data.role || !data.coverImg || !data.description} className={ui.primary}>
+            {saving ? "Saving…" : mode === "create" ? "Create project" : "Save changes"}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

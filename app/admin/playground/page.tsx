@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { ImageUpload } from "@/components/admin/ImageUpload"
 import { PiX } from "react-icons/pi"
+import { ui } from "@/components/admin/ui"
 
 interface Work { _id: string; index: number; img: string; title?: string; link?: string; tags: string[] }
 
@@ -103,124 +104,68 @@ export default function Playground() {
     load()
   }
 
-  const position = (w: Work) => String(works.indexOf(w) + 1).padStart(2, "0")
+  // one labelled input, in the admin style
+  const input = (label: string, value: string, onChange: (v: string) => void, placeholder = "") => (
+    <label className="flex flex-col gap-1.5">
+      <span className={ui.label}>{label}</span>
+      <input className={ui.field} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+    </label>
+  )
 
   return (
-    <div className="flex flex-col gap-10">
-      <p className="text-xs tracking-[0.2em] uppercase opacity-40">playground</p>
+    <div className="flex flex-col gap-10 max-w-6xl">
+      <h1 className={ui.title}>Playground</h1>
 
-      {/* Add */}
-      <div className="flex flex-col gap-4 max-w-sm border border-secondary/15 p-6">
-        <p className="text-2xs tracking-widest uppercase opacity-30">add work</p>
-        <ImageUpload label="image" value={img} onChange={setImg} folder="portfolio/playground" />
-        <div className="flex flex-col gap-1.5">
-          <label className="text-2xs tracking-widest uppercase opacity-40">title (optional)</label>
-          <input
-            className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
-            value={title} onChange={e => setTitle(e.target.value)}
-            placeholder="shown in the preview + used as alt text"
-          />
-          <label className="text-2xs tracking-widest uppercase opacity-40">tags (comma separated)</label>
-          <input
-            className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
-            value={tags} onChange={e => setTags(e.target.value)}
-            placeholder="design, motion, 3d"
-          />
-          <label className="text-2xs tracking-widest uppercase opacity-40">link (optional)</label>
-          <input
-            className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
-            value={link} onChange={e => setLink(e.target.value)}
-          />
-        </div>
-        {error && <p className="text-2xs text-red-700 tracking-widest">{error}</p>}
-        <button
-          onClick={add} disabled={saving || !img}
-          className="border border-secondary/25 px-4 py-2.5 text-2xs tracking-widest uppercase hover:bg-secondary/5 transition-colors disabled:opacity-30"
-        >
-          {saving ? "adding..." : "add"}
-        </button>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[20rem_1fr] gap-8 items-start">
+        {/* add a piece */}
+        <section className={ui.section}>
+          <h2 className={ui.sectionTitle}>Add a piece</h2>
+          <ImageUpload label="Image" value={img} onChange={setImg} folder="portfolio/playground" />
+          {input("Title (optional)", title, setTitle, "Shown in the preview, and used as alt text")}
+          {input("Tags (comma separated)", tags, setTags, "design, motion, 3d")}
+          {input("Link (optional)", link, setLink, "https://")}
+          {error && <p className="text-sm text-red-700">{error}</p>}
+          <button onClick={add} disabled={saving || !img} className={`${ui.primary} self-start`}>{saving ? "Adding…" : "Add piece"}</button>
+        </section>
 
-      {/* Grid */}
-      <div className="grid grid-cols-5 gap-3">
-        {works.map((w) => (
-          <div key={w._id} className="group relative aspect-square">
-            <img src={w.img} alt="" className="w-full h-full object-cover grayscale opacity-70" />
-            <div className="absolute inset-0 bg-primary/85 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-              <span className="text-2xs tracking-widest opacity-60">{position(w)}{w.title && ` · ${w.title}`}</span>
-              <button
-                onClick={() => openEdit(w)}
-                className="text-2xs tracking-widest hover:opacity-100 opacity-60"
-              >
-                edit
-              </button>
-              <button
-                onClick={() => remove(w._id)}
-                className="text-2xs text-red-700/80 tracking-widest hover:text-red-700"
-              >
-                remove
-              </button>
-            </div>
+        {/* the pieces */}
+        <section className={ui.section}>
+          <h2 className={ui.sectionTitle}>On the page <span className="font-mono text-xs font-normal text-ink/50">({works.length})</span></h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+            {works.map((w) => (
+              <div key={w._id} className="flex flex-col gap-2">
+                <img src={w.img} alt="" className="aspect-square w-full rounded-xl object-cover object-top ring-1 ring-ink/10" />
+                <p className="truncate text-sm font-medium">{w.title || <span className="text-ink/40">Untitled</span>}</p>
+                {w.tags.length > 0 && <p className="truncate font-mono text-2xs uppercase tracking-widest text-ink/55">{w.tags.join(" / ")}</p>}
+                <div className="flex gap-4">
+                  <button onClick={() => openEdit(w)} className={ui.ghost}>Edit</button>
+                  <button onClick={() => remove(w._id)} className={ui.danger}>Remove</button>
+                </div>
+              </div>
+            ))}
+            {!works.length && <p className="col-span-full text-sm text-ink/55">Nothing here yet.</p>}
           </div>
-        ))}
+        </section>
       </div>
 
-      {/* Edit drawer */}
+      {/* edit drawer */}
       {editing && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          {/* backdrop */}
-          <div className="absolute inset-0 bg-secondary/30" onClick={closeEdit} />
-
-          <div className="relative z-10 w-full max-w-sm h-full bg-primary border-l border-secondary/15 flex flex-col overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-secondary/15">
-              <p className="text-2xs tracking-widest uppercase opacity-40">
-                edit — {position(editing)}
-              </p>
-              <button onClick={closeEdit} className="opacity-40 hover:opacity-100 transition-opacity">
-                <PiX size={14} />
-              </button>
+          <div className="absolute inset-0 bg-ink/40" onClick={closeEdit} />
+          <div role="dialog" aria-modal="true" aria-label="Edit piece" className="relative z-10 flex h-full w-full max-w-md flex-col overflow-y-auto bg-cream">
+            <div className="flex items-center justify-between border-b border-ink/10 px-6 py-5">
+              <h2 className={ui.sectionTitle}>Edit piece</h2>
+              <button onClick={closeEdit} aria-label="Close" className="text-ink/50 hover:text-ink"><PiX size={16} /></button>
             </div>
-
-            {/* Fields */}
-            <div className="flex flex-col gap-6 p-6 flex-1">
-              <ImageUpload label="image" value={editImg} onChange={setEditImg} folder="portfolio/playground" />
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-2xs tracking-widest uppercase opacity-40">title (optional)</label>
-                <input
-                  className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
-                  value={editTitle} onChange={e => setEditTitle(e.target.value)}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-2xs tracking-widest uppercase opacity-40">tags (comma separated)</label>
-                <input
-                  className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
-                  value={editTags} onChange={e => setEditTags(e.target.value)}
-                  placeholder="design, motion, 3d"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-2xs tracking-widest uppercase opacity-40">link (optional)</label>
-                <input
-                  className="bg-transparent border border-secondary/15 px-3 py-2.5 text-xs outline-none focus:border-secondary/50 transition-colors"
-                  value={editLink} onChange={e => setEditLink(e.target.value)}
-                />
-              </div>
-              {editError && <p className="text-2xs text-red-700 tracking-widest">{editError}</p>}
+            <div className="flex flex-1 flex-col gap-5 p-6">
+              <ImageUpload label="Image" value={editImg} onChange={setEditImg} folder="portfolio/playground" />
+              {input("Title (optional)", editTitle, setEditTitle)}
+              {input("Tags (comma separated)", editTags, setEditTags, "design, motion, 3d")}
+              {input("Link (optional)", editLink, setEditLink, "https://")}
+              {editError && <p className="text-sm text-red-700">{editError}</p>}
             </div>
-
-            {/* Footer */}
-            <div className="px-6 py-5 border-t border-secondary/15">
-              <button
-                onClick={update} disabled={updating || !editImg}
-                className="w-full border border-secondary/25 px-4 py-2.5 text-2xs tracking-widest uppercase hover:bg-secondary/5 transition-colors disabled:opacity-30"
-              >
-                {updating ? "saving..." : "save changes"}
-              </button>
+            <div className="border-t border-ink/10 px-6 py-5">
+              <button onClick={update} disabled={updating || !editImg} className={`${ui.primary} w-full`}>{updating ? "Saving…" : "Save changes"}</button>
             </div>
           </div>
         </div>
