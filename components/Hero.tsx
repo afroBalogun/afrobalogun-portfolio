@@ -167,7 +167,6 @@ const FRO = (() => {
   return d
 })()
 
-// also used by the Gap poster (components/GapPoster.tsx)
 export function Figure({ className }: { className: string }) {
   return (
     <svg aria-hidden viewBox="120 230 640 650" preserveAspectRatio="xMidYMax meet" className={`pointer-events-none ${className}`}>
